@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+from itertools import combinations
+from math import ceil
 
-from harmonica.scale import PitchClassSet
+from harmonica.scale import PitchClassSet, ScaleFunc
 from harmonica.util import cumsum, diff
 
 
@@ -20,9 +22,6 @@ class PitchSet:
     def __post_init__(self):
         assert self.pitches == list(sorted(set(self.pitches))), "Pitches in pitch set must be unique."
         assert self.pitches == list(sorted(self.pitches)), "Pitches in pitch set must be sorted."
-
-        self.pitches = list(set(self.pitches)) # Remove duplicates
-        self.pitches.sort() # Sort pitches
 
     def __getitem__(self, item: int) -> int:
         return self.pitches[item]
@@ -45,15 +44,25 @@ class PitchSet:
     ## TRANSFORM ##
 
     def transpose(self, amount: int):
-        """Transposes the pitch set by `amount` semitones."""
+        """Transposes the pitch set."""
 
         for i in range(len(self.pitches)):
             self.pitches[i] += amount
+    
+    def transposed(self, amount: int) -> PitchSet:
+        """Returns a transposed pitch set."""
+        
+        return PitchSet([pitch + amount for pitch in self.pitches])
     
     def normalize(self):
         """Transposes the pitch set so the lowest pitch is 0."""
 
         self.transpose(-min(self.pitches))
+    
+    def normalized(self) -> PitchSet:
+        """Returns a normalized pitch set."""
+
+        return PitchSet([pitch - min(self.pitches) for pitch in self.pitches])
 
     def harmonize(self, target_pitch: int, target_pitch_index: int):
         """Transposes the pitch set so the pitch at `index` is equal to `pitch`."""
@@ -61,10 +70,21 @@ class PitchSet:
         self.pitches = [
             pitch + (target_pitch - self.pitches[target_pitch_index]) for pitch in self.pitches
         ]
+    
+    def invert(self, amount: int, modulus: int = 12):
+        """Treats the pitch set as a chord-scale with respect to a given modulus - 12 by default - 
+        and inverts the chord by a certain amount. This has the effect of moving the pitch set 
+        up or down in register."""
+
+        new_mod = modulus * ceil(self.span / modulus)
+        pcset = self.classify(new_mod)
+        func = pcset.scale_function(min(pcset.pitch_classes))
+        self.pitches = [func(func.index(pitch) + amount) for pitch in self.pitches]      
+        
 
     ## GENERATE ##
 
-    def classify(self, modulus: int) -> PitchClassSet:
+    def classify(self, modulus: int = 12) -> PitchClassSet:
         """Yields the pitch class set corresponding to this pitch set with respect to a given modulus."""
 
         pcset = [pitch % modulus for pitch in self.pitches]
@@ -94,38 +114,12 @@ class PitchSet:
         return max(self.pitches) - min(self.pitches)
     
     @property
-    def interval_network(self) -> list[list[int]]:
-        """Returns a list of lists representing intervals between pairs of pitches 
-        in the pitch set, grouped together by level of adjacency.
+    def interval_network(self) -> dict:
+        """Returns a dict that maps pairs of pitches to the intervals between them. 
+        This accounts for every interval present in the pitch set."""
 
-        The first list is of intervals between adjacent pitches, which is
-        equal to the shape of the pitch set. The second list is of intervals
-        between pairs of pitches that are two spaces apart, etc. 
+        return { pair : pair[1] - pair[0] for pair in combinations(self.pitches, 2)}
 
-        The sole element in the last list, the interval between the first and
-        last pitch, is equivalent to the span of the pitch set.
-        
-        Example: `{-4,1,8,10}` has the following interval network:
-        ```
-        [ [5,7,2], [12,9], [14] ]
-        ```"""
-
-        # RESEARCH FURTHER (Should probably just return a dict between tuples of pitches & intervals)
-
-        network = []
-
-        for adjacency in range(1, self.size):
-            entry = []
-
-            for pos in range(self.size - adjacency):
-                entry.append(self.pitches[pos + adjacency] - self.pitches[pos])
-
-            network.append(entry)
-        
-        return network
-
-
-    
 @dataclass
 class PitchSetShape:
     """A sequence of positive intervals that describes the intervallic shape of a pitch set."""
@@ -147,7 +141,7 @@ class PitchSetShape:
     
     ## TRANSFORM ##
 
-    def invert_around_voice(modulus: int, voice: int):
+    def invert_around_voice(self, modulus: int, voice: int):
         """Inverts a chord with respect to a modulus, fixed around a voice."""
 
         # RESEARCH FURTHER

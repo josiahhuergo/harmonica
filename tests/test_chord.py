@@ -50,8 +50,22 @@ class TestPitchSet:
     
     def test_interval_network(self):
         pset = PitchSet([0,7,14,16])
-        ivl_net = [[7,7,2],[14,9],[16]]
+        ivl_net = {
+            (0,7): 7,
+            (0,14): 14,
+            (0,16): 16,
+            (7,14): 7,
+            (7,16): 9,
+            (14,16): 2
+        }
         assert pset.interval_network == ivl_net
+    
+    def test_invert(self):
+        pset = PitchSet([4,6,9,13])
+        amount = 3
+        inverted = PitchSet([13,16,18,21])
+        pset.invert(amount)
+        assert pset == inverted
 
 
 class TestPitchSetShape:

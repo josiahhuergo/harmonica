@@ -1,6 +1,7 @@
 """Objects and algorithms pertaining to scales."""
 
 from __future__ import annotations
+from multimethod import multimethod
 from dataclasses import dataclass
 from itertools import combinations
 import math
@@ -30,13 +31,21 @@ class PitchClassSet:
         assert all(
             [0 <= pitch < self.modulus for pitch in self.pitch_classes]
         ), "Pitch classes must be between 0 and modulus - 1."
-
-        self.pitch_classes = list(set(self.pitch_classes)) # Eliminate redundancies
-        self.pitch_classes = [pitch_class % self.modulus for pitch_class in self.pitch_classes] # Modulo
-        self.pitch_classes.sort() # Sort
     
-    def __getitem__(self, item: int) -> int | list[int]:
-        return self.pitch_classes[item]
+    def __getitem__(self, item: int | slice) -> int | list[int]:
+        if isinstance(item, int):
+            return self.pitch_classes[item]
+        if isinstance(item, slice):
+            return self.pitch_classes[item.start:item.stop:item.step]
+    
+    def __add__(self, other: int) -> PitchClassSet:
+        return self.transposed(other)
+    
+    def a() -> int:
+        return True
+    
+    def __sub__(self, other: int) -> PitchClassSet:
+        return self.transposed(-other)
     
     ## TRANSFORMATION ##
 
@@ -45,6 +54,28 @@ class PitchClassSet:
 
         self.pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         self.pitch_classes.sort()
+    
+    def transposed(self, amount: int) -> PitchClassSet:
+        """Returns a transposed pitch class set."""
+
+        pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
+        pitch_classes.sort()
+
+        return PitchClassSet(pitch_classes, self.modulus)
+    
+    def normalize(self, pitch_class: int):
+        """Transposes the pitch classes in the set so 0 is present."""
+
+        assert pitch_class in self.pitch_classes
+
+        self.transpose(-pitch_class)
+
+    def normalized(self, pitch_class: int) -> PitchClassSet:
+        """Returns a normalized pitchset."""
+
+        assert pitch_class in self.pitch_classes
+
+        return self.transposed(-pitch_class)
 
     ## ANALYSIS ##
 
@@ -56,7 +87,7 @@ class PitchClassSet:
         domain = list(combinations(self.pitch_classes, 2))
         rang = [harmonic_interval_class(i[0], i[1], self.modulus) for i in domain]
 
-        return list(zip(domain, rang))
+        return [[]] #list(zip(domain, rang))
 
     @property
     def interval_vector(self) -> list[int]:
@@ -64,10 +95,19 @@ class PitchClassSet:
         # RESEARCH FURTHER
 
         ic_vector = [0] * (self.modulus // 2)
-        for scalar_iclass in self.interval_class_network:
+        for scalar_iclass in self.interval_network:
             if scalar_iclass[1] != 0:
                 ic_vector[scalar_iclass[1] - 1] += 1
-        return tuple(ic_vector)
+        return [2] #tuple(ic_vector)
+    
+    def scale_function(self, root: int) -> ScaleFunc:
+        """Returns a scale function that maps to the same pitches as this pitch class set.
+        
+        For example, if we have a pitch class set representing D major (and its modes) 
+        `{1,2,4,6,7,9,11} mod 12` and we specify 6 as the root then this will return 
+        `[1,3,5,7,8,10,12] + 6`."""
+        
+        return ScaleFunc(self.normalized(root)[1:] + [self.modulus], min(self.pitch_classes))
     
     @property
     def size(self) -> int:
@@ -85,7 +125,7 @@ class PitchClassSet:
         return ScaleShape(intervals)
 
 @dataclass
-class RootedPCSet(PitchClassSet):
+class PCSetWithRoot(PitchClassSet):
     """A pitch class set with one pitch class specified as the root.
     
     `{0,2,4,5,7,9,11} mod 12 root 4`, or `RootedPCSet([0,2,4,5,7,9,11], 12, 4)` 
@@ -178,11 +218,11 @@ class ScaleShape:
 
         return PitchClassSet(cycle_cumsum(self.intervals, starting_pitch), self.modulus)
 
-    def stamp_to_rooted_pcset(self, starting_pitch: int) -> RootedPCSet:
+    def stamp_to_rooted_pcset(self, starting_pitch: int) -> PCSetWithRoot:
         """Creates a rooted pitch class set by "stamping" this scale shape onto pitch class 
         space at the pitch class `starting_pitch`."""
 
-        return RootedPCSet(cycle_cumsum(self.intervals, starting_pitch), self.modulus, starting_pitch % self.modulus)
+        return PCSetWithRoot(cycle_cumsum(self.intervals, starting_pitch), self.modulus, starting_pitch % self.modulus)
     
     def stamp_to_scale_func(self, transposition: int) -> ScaleFunc:
         """Creates a scale function whose pattern is constructed from this shape."""
@@ -297,7 +337,7 @@ class ScaleFunc:
         new_period = (self.size * other.size) / math.gcd(self.modulus, other.modulus)
 
         return ScaleFunc(
-            pattern = tuple(other(self(i)) - new_t for i in range(1, new_period + 1)),
+            pattern = list(other(self(i)) - new_t for i in range(1, int(new_period) + 1)),
             transposition = new_t
         )
     
@@ -327,12 +367,12 @@ class ScaleFunc:
     def count_transpositions(self) -> int:
         """Counts the number of unique transpositions of this scale function."""
 
-        return self.shape.count_transpositions
+        return self.shape.count_transpositions()
     
     def count_modes(self) -> int:
         """Counts the number of distinct modes of the shape of this scale function."""
 
-        return self.shape.count_modes
+        return self.shape.count_modes()
     
     def maps_to_pitch(self, pitch: int) -> bool:
         """Returns true if this scale function has an input that maps to `pitch`."""
@@ -341,7 +381,7 @@ class ScaleFunc:
 
         return True if r in self._rmap else False
     
-    def index_of_pitch(self, pitch: int) -> bool:
+    def index(self, pitch: int) -> bool:
         """Returns the index that maps to `pitch` in this scale function.
         
         Example, the input that produces the pitch 25 from the scale function 

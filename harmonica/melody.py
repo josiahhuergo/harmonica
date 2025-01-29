@@ -18,6 +18,9 @@ class PitchSequence:
     def __getitem__(self, item: int) -> int | list[int]:
         return self.pitches[item]
     
+    def __len__(self) -> int:
+        return len(self.pitches)
+    
     def __add__(self, amount: int) -> PitchSequence:
         return PitchSequence([pitch + amount for pitch in self.pitches])
     
@@ -36,7 +39,7 @@ class PitchSequence:
     ## ANALYZE ##
 
     @property
-    def len(self) -> int:
+    def length(self) -> int:
         """Returns the length of the pitch sequence."""
 
         return len(self.pitches)
@@ -60,6 +63,9 @@ class PitchContour:
     def __getitem__(self, item: int) -> int:
         return self.intervals[item]
     
+    def __len__(self) -> int:
+        return len(self.pitches)
+    
     ## GENERATE ##
 
     def stamp(self, starting_pitch: int) -> PitchSequence:
@@ -70,7 +76,7 @@ class PitchContour:
     ## ANALYZE ##
 
     @property
-    def len(self) -> int:
+    def length(self) -> int:
         """Returns the length of the melodic shape."""
 
         return len(self.intervals)
@@ -106,11 +112,55 @@ class PCSequence:
     def __getitem__(self, item: int) -> int: 
         return self.pitch_classes[item]
     
+    def __len__(self) -> int:
+        return len(self.pitch_classes)
+    
     ## ANALYZE ##
 
     @property
-    def len(self) -> int:
+    def length(self) -> int:
         """Returns the length of the pitch class sequence."""
 
         return len(self.pitch_classes)
+
+@dataclass
+class Polyphony:
+    """A set of pitch sequences, representing a polyphony of voices."""
+
+    ## DATA ##
+
+    pitch_sequences: list[PitchSequence]
+
+    ## MAGIC METHODS ##
+
+    def __len__(self) -> int:
+        return len(self.pitch_sequences)
     
+    ## TRANSFORM ##
+
+    def transpose(self, amount: int):
+        """Transposes all the pitch sequences in the set."""
+
+        for pitch_sequence in self.pitch_sequences:
+            pitch_sequence.transpose(amount)
+
+    ## ANALYZE ##
+
+    def all_lengths_equal(self) -> bool:
+        """Returns true if all pitch sequences in the set are of the same length."""
+
+        if len(self.pitch_sequences) == 0:
+            return True
+        
+        length = self.pitch_sequences[0].length
+
+        if all([x.length == length for x in self.pitch_sequences]):
+            return True
+        else:
+            return False
+    
+    @property
+    def size(self) -> int:
+        """Returns the size of the set of pitch sequences."""
+
+        return len(self.pitch_sequences)
