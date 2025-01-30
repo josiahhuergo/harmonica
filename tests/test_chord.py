@@ -67,7 +67,6 @@ class TestPitchSet:
         pset.invert(amount)
         assert pset == inverted
 
-
 class TestPitchSetShape:
     def test_init_neg(self):
         with pytest.raises(AssertionError):

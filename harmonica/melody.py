@@ -64,7 +64,7 @@ class PitchContour:
         return self.intervals[item]
     
     def __len__(self) -> int:
-        return len(self.pitches)
+        return len(self.intervals)
     
     ## GENERATE ##
 

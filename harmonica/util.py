@@ -2,6 +2,7 @@
 
 import math
 from itertools import chain, combinations
+from typing import Any
 
 pitch_key = {
     0: "C",
@@ -30,7 +31,7 @@ def int_to_pitch_class(pitch_int: int) -> str:
 
     return pitch_key[pitch_int % 12]
 
-def rotate(lst: list, n: int) -> list:
+def rotate(lst: list[Any], n: int) -> list[Any]:
     """Returns a rotated list."""
 
     return lst[n % len(lst):] + lst[:n % len(lst)]
@@ -53,27 +54,27 @@ def brightness_of_tone(tone: int) -> int:
 
     return brightness_map[tone]
 
-def cluster(b: list, x: int) -> tuple:
-    # Returns a list describing the size of the clusters of number x in list b
-    # That is to say, it counts the number of adjacent occurrences of the number x in list b
-    # For example, in [2, 1, 1, 4], there are 2 adjacent occurrences of the number 1.
-    # (What is this even for?)
+# def cluster(b: list, x: int) -> list:
+#     # Returns a list describing the size of the clusters of number x in list b
+#     # That is to say, it counts the number of adjacent occurrences of the number x in list b
+#     # For example, in [2, 1, 1, 4], there are 2 adjacent occurrences of the number 1.
+#     # (What is this even for?)
 
-    outp = [0]
-    for i in range(len(b)):
-        if b[i] == x:
-            outp[-1] += 1
-        else:
-            outp += [0]
+#     outp = [0]
+#     for i in range(len(b)):
+#         if b[i] == x:
+#             outp[-1] += 1
+#         else:
+#             outp += [0]
 
-    return [i for i in outp[1:-1] + [outp[0] + outp[-1]] if i != 0]
+#     return [i for i in outp[1:-1] + [outp[0] + outp[-1]] if i != 0]
 
-def diff(seq: list) -> list:
+def diff(seq: list[int]) -> list[int]:
     """Diffs a sequence of numbers."""
 
     return [seq[i+1] - seq[i] for i in range(len(seq)-1)]
 
-def cycle_diff(cycle: list, mod: int, start_index: int) -> list:
+def cycle_diff(cycle: list[int], mod: int, start_index: int) -> list[int]:
     """Diffs a circular permutation of numbers using modular arithmetic.
     
     Args:
@@ -84,7 +85,7 @@ def cycle_diff(cycle: list, mod: int, start_index: int) -> list:
 
     return rotate(cdiff, start_index)
 
-def cumsum(seq: list, start: int = 0) -> list:
+def cumsum(seq: list[int], start: int = 0) -> list[int]:
     """Gives the cumulative sum of a sequence (opposite of diff)."""
 
     cs = [start]
@@ -93,7 +94,7 @@ def cumsum(seq: list, start: int = 0) -> list:
 
     return cs
 
-def cycle_cumsum(cycle: list, start: int) -> list:
+def cycle_cumsum(cycle: list[int], start: int) -> list[int]:
     """Cumulatively sums a circular permutation of numbers using modular arithmetic. 
     The sum of the cycle is taken as the modulus."""
 
@@ -106,12 +107,12 @@ def cycle_cumsum(cycle: list, start: int) -> list:
 
     return cs
 
-def matrix_transpose(list_of_lists: list[list]) -> list[list]:
+def matrix_transpose(list_of_lists: list[list[Any]]) -> list[list[Any]]:
     """Transposes a tuple of tuples, in the matrix sense."""
 
     return list(map(list, zip(*list_of_lists)))
 
-def repeating_subseq(seq: list) -> list:
+def repeating_subseq(seq: list[Any]) -> list[Any]:
     """If there's a repeating sequence inside of the list, it will be returned.
     Otherwise, it will return the original list."""
 
@@ -134,7 +135,7 @@ def repeating_subseq(seq: list) -> list:
         
     return seq
 
-def flatten_list(lst: list) -> list:
+def flatten_list(lst: Any) -> list[Any]:
     """Takes a nested list and flattens into a simple 1-dimensional list."""
 
     if lst == []:
@@ -155,18 +156,18 @@ def quantize(n: int, q: int) -> int:
 def is_cyclically_ordered(a: int, b: int, c: int, m: int) -> bool:
     return 0 <= (b - a) % m <= (c - a) % m
 
-def factors(n: int) -> list:
+def factors(n: int) -> list[int]:
     """Returns the factors of n."""
 
     return list(i for i in range(1,n+1) if n % i == 0)
 
-def print_list(lis: list):
+def print_list(lis: list[Any]):
     """Prints a list row by row."""
 
     for e in lis:
         print(e)
 
-def powerset(n: list) -> list[list]:
+def powerset(n: list[Any]) -> list[list[Any]]:
     """Returns the powerset of the list n."""
 
     s = list(n)

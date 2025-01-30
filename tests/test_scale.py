@@ -53,7 +53,7 @@ class TestScaleShape:
         shape = ScaleShape([3,3,4,2])
         root = 4
         rootpcset = PCSetWithRoot([2,4,7,10], shape.modulus, root)
-        assert shape.stamp_to_rooted_pcset(root) == rootpcset
+        assert shape.stamp_to_pcset_with_root(root) == rootpcset
     
     def test_stamp_to_scale_func(self):
         shape = ScaleShape([2,2,3,2,2,1])
@@ -103,3 +103,8 @@ class TestScaleFunc:
         pitch = scale.eval_rot(3)
         rot = ScaleFunc([2,4,6,7], 8)
         assert pitch == 8 and scale == rot
+
+    def test_eval_many(self):
+        scale = ScaleFunc([2,4,5], 4)
+        evals = [6,9,13]
+        assert scale.eval_many([1,3,5]) == evals

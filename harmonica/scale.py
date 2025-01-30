@@ -1,9 +1,9 @@
 """Objects and algorithms pertaining to scales."""
 
 from __future__ import annotations
-from multimethod import multimethod
 from dataclasses import dataclass
 from itertools import combinations
+from typing import List, overload
 import math
 
 from harmonica.util import cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
@@ -18,7 +18,7 @@ class PitchClassSet:
     ## DATA ##
 
     pitch_classes: list[int]
-    modulus: int
+    modulus: int 
 
     ## MAGIC METHODS ##
 
@@ -39,13 +39,10 @@ class PitchClassSet:
             return self.pitch_classes[item.start:item.stop:item.step]
     
     def __add__(self, other: int) -> PitchClassSet:
-        return self.transposed(other)
-    
-    def a() -> int:
-        return True
+        return self.get_transposed(other)
     
     def __sub__(self, other: int) -> PitchClassSet:
-        return self.transposed(-other)
+        return self.get_transposed(-other)
     
     ## TRANSFORMATION ##
 
@@ -55,7 +52,7 @@ class PitchClassSet:
         self.pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         self.pitch_classes.sort()
     
-    def transposed(self, amount: int) -> PitchClassSet:
+    def get_transposed(self, amount: int) -> PitchClassSet:
         """Returns a transposed pitch class set."""
 
         pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
@@ -70,12 +67,12 @@ class PitchClassSet:
 
         self.transpose(-pitch_class)
 
-    def normalized(self, pitch_class: int) -> PitchClassSet:
+    def get_normalized(self, pitch_class: int) -> PitchClassSet:
         """Returns a normalized pitchset."""
 
         assert pitch_class in self.pitch_classes
 
-        return self.transposed(-pitch_class)
+        return self.get_transposed(-pitch_class)
 
     ## ANALYSIS ##
 
@@ -107,7 +104,7 @@ class PitchClassSet:
         `{1,2,4,6,7,9,11} mod 12` and we specify 6 as the root then this will return 
         `[1,3,5,7,8,10,12] + 6`."""
         
-        return ScaleFunc(self.normalized(root)[1:] + [self.modulus], min(self.pitch_classes))
+        return ScaleFunc(self.get_normalized(root).pitch_classes[1:] + [self.modulus], min(self.pitch_classes))
     
     @property
     def size(self) -> int:
@@ -116,11 +113,11 @@ class PitchClassSet:
         return len(self.pitch_classes)
     
     @property
-    def shape(self, start_index: int = 0) -> ScaleShape:
+    def shape(self) -> ScaleShape:
         """The intervallic shape of the pitch class set, by default starting
         from the lowest pitch class in the set."""
 
-        intervals = cycle_diff(self.pitch_classes, self.modulus, start_index)
+        intervals = cycle_diff(self.pitch_classes, self.modulus, 0)
 
         return ScaleShape(intervals)
 
@@ -165,7 +162,7 @@ class PCSetWithRoot(PitchClassSet):
 
         shape = self.shape
         shape.rotate(amount)
-        new_pcset = shape.stamp_to_rooted_pcset(self.root)
+        new_pcset = shape.stamp_to_pcset_with_root(self.root)
         self.pitch_classes = new_pcset.pitch_classes
 
     def transpose(self, amount: int):
@@ -200,8 +197,11 @@ class ScaleShape:
             [0 < interval for interval in self.intervals]
         ), "Intervals in pitch class set shape must be positive."
     
-    def __getitem__(self, item: int) -> int | list[int]:
-        return self.intervals[item]
+    def __getitem__(self, item: int | slice) -> int | list[int]:
+        if isinstance(item, int):
+            return self.intervals[item]
+        if isinstance(item, slice):
+            return self.intervals[item.start:item.stop:item.step]
     
     ## TRANSFORM ##
     
@@ -218,7 +218,7 @@ class ScaleShape:
 
         return PitchClassSet(cycle_cumsum(self.intervals, starting_pitch), self.modulus)
 
-    def stamp_to_rooted_pcset(self, starting_pitch: int) -> PCSetWithRoot:
+    def stamp_to_pcset_with_root(self, starting_pitch: int) -> PCSetWithRoot:
         """Creates a rooted pitch class set by "stamping" this scale shape onto pitch class 
         space at the pitch class `starting_pitch`."""
 
@@ -288,8 +288,16 @@ class ScaleFunc:
         assert self.pattern == sorted(self.pattern), 'Elements of pattern must be in ascending order.'
         assert all([harmonic > 0 for harmonic in self.pattern]), 'Elements of pattern must be greater than 0.'
     
-    def __call__(self, n: int) -> int:
-        return self.eval(n)
+    @overload
+    def __call__(self, n: int) -> int: ...
+    @overload
+    def __call__(self, n: list[int]) -> list[int]: ...
+
+    def __call__(self, n):
+        if isinstance(n, int):
+            return self.eval(n)
+        if isinstance(n, list):
+            return self.eval(n)
     
     def __add__(self, amount: int):
         self.transpose(amount)
@@ -314,7 +322,7 @@ class ScaleFunc:
     def rotate_mode_relative(self, amount: int):
         """Rotates to a relative mode, changing the transposition."""
 
-        self.transposition += (self(amount) - self.transposition)
+        self.transposition += (self.eval(amount) - self.transposition)
         self.rotate_mode_parallel(amount)
     
     def eval_rot(self, n: int) -> int:
@@ -333,11 +341,11 @@ class ScaleFunc:
 
         # RESEARCH FURTHER
 
-        new_t = other(self(0))
+        new_t: int = other.eval(self.eval(0))
         new_period = (self.size * other.size) / math.gcd(self.modulus, other.modulus)
 
         return ScaleFunc(
-            pattern = list(other(self(i)) - new_t for i in range(1, int(new_period) + 1)),
+            pattern = list(other.eval(self.eval(i)) - new_t for i in range(1, int(new_period) + 1)),
             transposition = new_t
         )
     
@@ -348,16 +356,32 @@ class ScaleFunc:
     
     ## ANALYZE ##
 
-    def eval(self, n: int) -> int:
-        """Evaluates the function with input n.
+    @overload
+    def eval(self, n: int) -> int: ...
+    @overload 
+    def eval(self, n: list[int]) -> list[int]: ...
+
+    def eval(self, n: int | list[int]) -> int | list[int]:
+        """Evaluates the scale function.
         
         The object itself can be called like a function, yielding this evaluation.
-        ```
+        
         >>> scale = ScaleFunc([2,3,5,7,9,10,12],2)
         >>> scale(6)
         12  
-        ```"""
+        
+        You can also evaluate a list of integers:
+        
+        >>> scale([1,3,4,6])
+        [4,7,9,12]
+        """
 
+        if isinstance(n, int):
+            return self._eval(n)
+        if isinstance(n, list):
+            return [self._eval(i) for i in n]
+
+    def _eval(self, n: int) -> int:
         r = n % len(self.pattern)
         q = int((n - r)) / self.size
 
@@ -381,12 +405,25 @@ class ScaleFunc:
 
         return True if r in self._rmap else False
     
-    def index(self, pitch: int) -> bool:
+    @overload
+    def index(self, pitch: int) -> int: ...
+    @overload
+    def index(self, pitch: list[int]) -> list[int]: ...
+
+    def index(self, pitch: int | list[int]) -> int | list[int]:
         """Returns the index that maps to `pitch` in this scale function.
         
         Example, the input that produces the pitch 25 from the scale function 
-        `[2,4,5,7,9,11,12] + 4` is 12."""
+        `[2,4,5,7,9,11,12] + 4` is 12.
+        
+        You can also check the indexes of a list of integers."""
 
+        if isinstance(pitch, int):
+            return self._index(pitch)
+        if isinstance(pitch, list):
+            return [self._index(p) for p in pitch]        
+    
+    def _index(self, pitch: int) -> int:
         assert self.maps_to_pitch(pitch), "Scale function must map to pitch."
         r = (pitch - self.transposition) % self.modulus
 
@@ -409,7 +446,7 @@ class ScaleFunc:
         return ScaleShape(cycle_diff(self._rmap, self.modulus, 0))
 
     @property
-    def _rmap(self) -> tuple[int, ...]:  # residue map
+    def _rmap(self) -> list[int]:  # residue map
         return [0] + self.pattern[:-1]
 
 def normalize_interval(interval: int, mod: int) -> int:

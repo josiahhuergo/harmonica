@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from itertools import combinations
 from math import ceil
 
-from harmonica.scale import PitchClassSet, ScaleFunc
+from harmonica.scale import PitchClassSet
 from harmonica.util import cumsum, diff
 
 
@@ -32,7 +32,7 @@ class PitchSet:
 
         return pset
     
-    def __sub__(self, amount: int):
+    def __sub__(self, amount: int) -> PitchSet:
         pset = pset = PitchSet(self.pitches)
         pset.transpose(-amount)
 
@@ -80,7 +80,6 @@ class PitchSet:
         pcset = self.classify(new_mod)
         func = pcset.scale_function(min(pcset.pitch_classes))
         self.pitches = [func(func.index(pitch) + amount) for pitch in self.pitches]      
-        
 
     ## GENERATE ##
 
@@ -162,5 +161,4 @@ class PitchSetShape:
         """How many semitones the shape spans."""
 
         return sum(self.intervals)
-
 

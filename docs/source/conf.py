@@ -10,7 +10,7 @@ import os
 import sys
 
 
-project = 'Harmonica'
+project = 'harmonica'
 copyright = '2025, Josiah Huergo'
 author = 'Josiah Huergo'
 
