@@ -2,7 +2,11 @@
 
 import math
 from itertools import chain, combinations
-from typing import Any
+
+__all__ = ["pitch_key", "int_to_note", "int_to_pitch_class", "rotate", 
+           "brightness_of_tone", "diff", "cycle_diff", "cumsum", "cycle_cumsum", 
+           "matrix_transpose", "repeating_subseq", "flatten_list", "smallest_multiple", 
+           "quantize", "is_cyclically_ordered", "factors", "print_list", "powerset"]
 
 pitch_key = {
     0: "C",
@@ -31,7 +35,7 @@ def int_to_pitch_class(pitch_int: int) -> str:
 
     return pitch_key[pitch_int % 12]
 
-def rotate(lst: list[Any], n: int) -> list[Any]:
+def rotate(lst: list, n: int) -> list:
     """Returns a rotated list."""
 
     return lst[n % len(lst):] + lst[:n % len(lst)]
@@ -107,12 +111,12 @@ def cycle_cumsum(cycle: list[int], start: int) -> list[int]:
 
     return cs
 
-def matrix_transpose(list_of_lists: list[list[Any]]) -> list[list[Any]]:
+def matrix_transpose(list_of_lists: list[list]) -> list[list]:
     """Transposes a tuple of tuples, in the matrix sense."""
 
     return list(map(list, zip(*list_of_lists)))
 
-def repeating_subseq(seq: list[Any]) -> list[Any]:
+def repeating_subseq(seq: list) -> list:
     """If there's a repeating sequence inside of the list, it will be returned.
     Otherwise, it will return the original list."""
 
@@ -135,7 +139,7 @@ def repeating_subseq(seq: list[Any]) -> list[Any]:
         
     return seq
 
-def flatten_list(lst: Any) -> list[Any]:
+def flatten_list(lst: list) -> list:
     """Takes a nested list and flattens into a simple 1-dimensional list."""
 
     if lst == []:
@@ -161,13 +165,13 @@ def factors(n: int) -> list[int]:
 
     return list(i for i in range(1,n+1) if n % i == 0)
 
-def print_list(lis: list[Any]):
+def print_list(lis: list):
     """Prints a list row by row."""
 
     for e in lis:
         print(e)
 
-def powerset(n: list[Any]) -> list[list[Any]]:
+def powerset(n: list) -> list[list]:
     """Returns the powerset of the list n."""
 
     s = list(n)

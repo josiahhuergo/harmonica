@@ -4,6 +4,8 @@ from dataclasses import dataclass
 
 from harmonica.chord import PitchSet
 
+__all__ = ["PitchSetSeq"]
+
 @dataclass
 class PitchSetSeq:
     """A sequence of pitch sets, representing a succession of chord voicings."""

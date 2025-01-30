@@ -8,6 +8,8 @@ from math import ceil
 from harmonica.scale import PitchClassSet
 from harmonica.util import cumsum, diff
 
+__all__ = ["PitchSet", "PitchSetShape"]
+
 
 @dataclass
 class PitchSet:

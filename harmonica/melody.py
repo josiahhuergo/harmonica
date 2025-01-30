@@ -5,6 +5,8 @@ from dataclasses import dataclass
 
 from harmonica.util import cumsum, diff
 
+__all__ = ["PitchSequence", "PitchContour", "MelodicFunc", "PCSequence", "Polyphony"]
+
 @dataclass
 class PitchSequence:
     """A sequence of pitches used to represent a melody."""

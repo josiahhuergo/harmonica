@@ -1,4 +1,4 @@
-from harmonica.scale import PitchClassSet, ScaleFunc, ScaleShape, PCSetWithRoot
+from scale import PitchClassSet, ScaleFunc, ScaleShape, PCSetWithRoot
 
 class TestPitchClassSet:
     def test_transpose(self):
@@ -104,7 +104,7 @@ class TestScaleFunc:
         rot = ScaleFunc([2,4,6,7], 8)
         assert pitch == 8 and scale == rot
 
-    def test_eval_many(self):
+    def test_eval_list(self):
         scale = ScaleFunc([2,4,5], 4)
         evals = [6,9,13]
-        assert scale.eval_many([1,3,5]) == evals
+        assert scale([1,3,5]) == evals
