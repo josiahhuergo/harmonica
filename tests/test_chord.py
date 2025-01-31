@@ -1,6 +1,6 @@
 import pytest
 from harmonica.chord import PitchSet, PitchSetShape
-from harmonica.scale.scale import PitchClassSet
+from harmonica._scale import PitchClassSet
 
 class TestPitchSet:
     def test_size(self):
@@ -83,3 +83,6 @@ class TestPitchSetShape:
     def test_span(self):
         shape = PitchSetShape([2,4,6])
         assert shape.span == 12
+
+class TestFindPitchSets:
+    pass

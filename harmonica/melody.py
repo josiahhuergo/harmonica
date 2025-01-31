@@ -3,7 +3,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 
-from harmonica.util import cumsum, diff
+from harmonica._utility import cumsum, diff
 
 __all__ = ["PitchSequence", "PitchContour", "MelodicFunc", "PCSequence", "Polyphony"]
 

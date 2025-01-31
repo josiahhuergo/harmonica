@@ -1,4 +1,4 @@
-from harmonica.util import *
+from harmonica._utility import *
 
 def test_rotate():
     lst = [0,4,6,9,2]

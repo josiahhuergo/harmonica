@@ -1,4 +1,4 @@
-from scale import PitchClassSet, ScaleFunc, ScaleShape, PCSetWithRoot
+from harmonica._scale import PitchClassSet, ScaleFunc, ScaleShape, PCSetWithRoot
 
 class TestPitchClassSet:
     def test_transpose(self):

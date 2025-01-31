@@ -1,17 +1,12 @@
-"""Objects and algorithms pertaining to scales."""
-
 from __future__ import annotations
 from typing import overload
 from dataclasses import dataclass
 from itertools import combinations
 import math
 
-from harmonica.util import (
-    export, cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
-)
-
-__all__ = ["PitchClassSet", "PCSetWithRoot", "ScaleShape", "ScaleFunc", 
-           "normalize_interval", "melodic_interval_class", "harmonic_interval_class"]
+from _utility import (
+    cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
+) 
 
 @dataclass
 class PitchClassSet:
@@ -87,7 +82,7 @@ class PitchClassSet:
         # RESEARCH FURTHER
 
         domain = list(combinations(self.pitch_classes, 2))
-        rang = [harmonic_interval_class(i[0], i[1], self.modulus) for i in domain]
+        rang = [_harmonic_interval_class(i[0], i[1], self.modulus) for i in domain]
 
         return [[]] #list(zip(domain, rang))
 
@@ -260,7 +255,6 @@ class ScaleShape:
 
         return sum(self.intervals)
 
-@export
 @dataclass 
 class ScaleFunc:
     """A scale function is a pattern of pitches along with a transposition
@@ -455,8 +449,7 @@ class ScaleFunc:
     def _rmap(self) -> list[int]:  # residue map
         return [0] + self.pattern[:-1]
 
-@export
-def normalize_interval(interval: int, mod: int) -> int:
+def _normalize_interval(interval: int, mod: int) -> int:
     # converts a member of an interval class to its smallest representative.
     # example: 5 and 7 are of the same interval class. if 5 was present, it'd stay
     # the same. but if 7 was present, it'd become 5.
@@ -465,19 +458,17 @@ def normalize_interval(interval: int, mod: int) -> int:
 
     return interval if interval < mod - interval else mod - interval
 
-@export
-def melodic_interval_class(pclass1: int, pclass2: int, modulus: int) -> int:
+def _melodic_interval_class(pclass1: int, pclass2: int, modulus: int) -> int:
     """Returns the melodic interval class between one pitch class and another."""
 
     # RESEARCH FURTHER
 
     return (pclass2 - pclass1) % modulus
 
-@export
-def harmonic_interval_class(pclass1: int, pclass2: int, modulus: int) -> int:
+def _harmonic_interval_class(pclass1: int, pclass2: int, modulus: int) -> int:
     """Returns the harmonic interval class between two pitch classes."""
 
     # RESEARCH FURTHER
 
-    return normalize_interval(melodic_interval_class(pclass1, pclass2, modulus), modulus)
+    return _normalize_interval(_melodic_interval_class(pclass1, pclass2, modulus), modulus)
 
