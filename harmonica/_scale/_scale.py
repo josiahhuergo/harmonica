@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from itertools import combinations
 import math
 
-from _utility import (
+from harmonica.utility import (
     cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
 ) 
 

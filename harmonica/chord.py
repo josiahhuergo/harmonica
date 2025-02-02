@@ -2,4 +2,13 @@
 
 from harmonica._chord import *
 
-__all__ = ["PitchSet", "PitchSetShape"]
+__all__ = [
+    
+    # _chord
+    "PitchSet", 
+    "PitchSetShape",
+    
+    # _find
+    "FindPitchSets"
+
+]

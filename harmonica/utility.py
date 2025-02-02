@@ -3,10 +3,10 @@
 import math
 from itertools import chain, combinations
 
-# __all__ = ["pitch_key", "int_to_note", "int_to_pitch_class", "rotate", 
-#            "brightness_of_tone", "diff", "cycle_diff", "cumsum", "cycle_cumsum", 
-#            "matrix_transpose", "repeating_subseq", "flatten_list", "smallest_multiple", 
-#            "quantize", "is_cyclically_ordered", "factors", "print_list", "powerset"]
+__all__ = ["pitch_key", "int_to_note", "int_to_pitch_class", "rotate", 
+           "brightness_of_tone", "diff", "cycle_diff", "cumsum", "cycle_cumsum", 
+           "matrix_transpose", "repeating_subseq", "flatten_list", "smallest_multiple", 
+           "quantize", "is_cyclically_ordered", "factors", "print_list", "powerset"]
 
 pitch_key = {
     0: "C",
@@ -171,10 +171,6 @@ def print_list(lis: list):
     for e in lis:
         print(e)
 
-def powerset(n: list) -> list[list]:
-    """Returns the powerset of the list n."""
-
-    s = list(n)
-
-    return list(list(x) for x in
-            list(chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))))
+def powerset(iterable):
+    s = list(iterable)
+    return chain.from_iterable(combinations(s, r) for r in range(len(s)+1))

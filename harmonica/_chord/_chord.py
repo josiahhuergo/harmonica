@@ -4,7 +4,7 @@ from itertools import combinations
 from math import ceil
 
 from harmonica._scale import PitchClassSet
-from _utility import cumsum, diff
+from harmonica.utility import cumsum, diff
 
 
 @dataclass
