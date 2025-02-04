@@ -1,15 +1,16 @@
 """TODO
 - Create Criterion subclasses for all criteria
+- Write more search algorithms to remove computational bottlenecks
 - Build out decision tree in `collect()`
 - Convert algorithms into iterators / generators for lazy evaluation
 """
 
 from __future__ import annotations
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Optional
 
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
 from harmonica.utility import powerset
 from harmonica._chord import PitchSet, PitchSetShape
 
@@ -20,22 +21,12 @@ class FindPitchSets:
     
     You call criteria setting methods and then return results with collect()."""
 
-    min_pitch: int
-    max_pitch: int
     criteria: PSetCriteria
 
     def __init__(self, min_pitch: int, max_pitch: int):
-        self.min_pitch = min_pitch
-        self.max_pitch = max_pitch
-        self.criteria = PSetCriteria()
+        assert min_pitch < max_pitch, "Min pitch must be less than max pitch."
 
-    ## COLLECTING RESULTS ##
-
-    def collect(self) -> PitchSets:
-        if self.criteria.has_shape is not None:
-            return self._transpositions()
-        else:
-            return self._brute_force()
+        self.criteria = PSetCriteria(min_pitch, max_pitch)
         
     ## SETTING CRITERIA ##
         
@@ -75,56 +66,119 @@ class FindPitchSets:
         self.criteria.in_pcset.value = pcset
 
         return self
+
+    ## COLLECTING RESULTS ##
+
+    def collect(self) -> PitchSets:
+        if self.criteria.has_shape.value is not None:
+            return self._transpositions()
+        elif self.criteria.in_pcset.value is not None:
+            return self._pcset_search()
+        else:
+            return self._brute_force()
     
     ## SEARCH ALGORITHMS ##
     
     def _brute_force(self) -> PitchSets:
-        results: PitchSets = []
+        """Iterate through powerset of range, and then assert that criterion.filter(pset)
+        is true for all criteria."""
 
-        # Iterate through powerset of range, and then assert that criterion.filter(pset)
-        # is true for all criteria in self.criteria.get()
-        for pitch_set in powerset(range(self.min_pitch, self.max_pitch)):
-            pset = PitchSet(list(pitch_set))
-            if all([criterion.filter(pset) for criterion in self.criteria.get()]):
-                results.append(pset)
+        results: PitchSets = []
+        min_pitch: int = self.criteria.min_pitch
+        max_pitch: int = self.criteria.max_pitch
+        criteria: list[Criterion] = list(self.criteria.get().values())
+
+        for pitch_set in powerset(range(min_pitch, max_pitch)):
+            pitch_set = PitchSet(list(pitch_set)) 
+            
+            if all([criterion.filter(pitch_set) for criterion in criteria]):
+                results.append(pitch_set)
+
+        return results
+    
+    def _pcset_search(self) -> PitchSets:
+        """Iterate through powerset of range of pitches inside of a pitch class set
+        and filter through elements using all present criteria."""
+
+        assert self.criteria.in_pcset.value is not None
+
+        results: PitchSets = []
+        pcset: PitchClassSet = self.criteria.in_pcset.value
+        min_pitch: int = self.criteria.min_pitch
+        max_pitch: int = self.criteria.max_pitch
+        criteria: list[Criterion] = list(
+            criterion for criterion in self.criteria.get().values()
+        )
+
+        pitches = [pitch for pitch in range(min_pitch, max_pitch + 1) if pcset.contains(pitch)]
+        for pitch_set in powerset(pitches):
+            pitch_set = PitchSet(list(pitch_set))
+
+            if all([criterion.filter(pitch_set) for criterion in criteria]):
+                results.append(pitch_set)
 
         return results
     
     def _transpositions(self) -> PitchSets:
-        # Called when has_shape is present, transposes a pitch set stamped at 
-        # min_pitch until it's highest pitch exceeds max_pitch.
-        
+        """Called when has_shape is present, transposes a pitch set stamped at 
+        min_pitch until it's highest pitch exceeds max_pitch"""
+
+        assert self.criteria.has_shape.value is not None
+
         results: PitchSets = []
+        shape: PitchSetShape = self.criteria.has_shape.value
+        min_pitch: int = self.criteria.min_pitch
+        max_pitch: int = self.criteria.max_pitch
+
+        transpositions = (max_pitch - min_pitch) - shape.span + 1
+
+        if transpositions < 1:
+            return results
+
+        pitch_set: PitchSet = shape.stamp(min_pitch)
+
+        for transposition in range(transpositions):
+            results.append(pitch_set + transposition)
 
         return results
 
 class PSetCriteria:
+    min_pitch: int
+    max_pitch: int
     is_size: PSetIsSize
     max_size: PSetMaxSize 
     has_shape: PSetHasShape 
     has_subshape: PSetHasSubshape 
-    in_pcset: PSetInPCSet 
+    in_pcset: PSetInPCSet
 
-    def __init__(self):
+    def __init__(self, min_pitch: int, max_pitch: int):
+        self.min_pitch = min_pitch
+        self.max_pitch = max_pitch
         self.is_size = PSetIsSize()
         self.max_size = PSetMaxSize()
         self.has_shape = PSetHasShape()
         self.has_subshape = PSetHasSubshape()
         self.in_pcset = PSetInPCSet()
 
-    def get(self) -> list[Criterion]:
+    def get(self, exclude: list[str] = []) -> dict[str, Criterion]:
         """Returns a list of the criterion objects which have non-None values."""
-        return [criterion for criterion in vars(self).values() if criterion.value != None]
+        return {
+            name:criterion for name, criterion in vars(self).items()
+            if name != "min_pitch" 
+            and name != "max_pitch" 
+            and criterion.value is not None 
+            and name not in exclude
+        }
 
 class Criterion: 
-    value: Any
+    value: Optional[Any]
 
     @abstractmethod
     def filter(self, object) -> bool: ...
 
 @dataclass
 class PSetIsSize(Criterion):
-    value: int | None = None
+    value: Optional[int] = None
 
     def filter(self, object: PitchSet) -> bool:
         if object.size == self.value:
@@ -134,10 +188,11 @@ class PSetIsSize(Criterion):
 
 @dataclass
 class PSetMaxSize(Criterion):
-    value: int | None = None
+    value: Optional[int] = None
 
     def filter(self, object: PitchSet) -> bool:
         assert type(self.value) == int
+
         if object.size <= self.value:
             return True
         else:
@@ -145,7 +200,7 @@ class PSetMaxSize(Criterion):
 
 @dataclass
 class PSetHasShape(Criterion):
-    value: PitchSetShape | None = None
+    value: Optional[PitchSetShape] = None
 
     def filter(self, object: PitchSet) -> bool:
         if object.shape == self.value:
@@ -155,16 +210,21 @@ class PSetHasShape(Criterion):
 
 @dataclass
 class PSetHasSubshape(Criterion):
-    value: PitchSetShape | None = None
+    value: Optional[PitchSetShape] = None
 
     def filter(self, object: PitchSet) -> bool:
         return True  # WRITE THIS
 
 @dataclass
 class PSetInPCSet(Criterion):
-    value: PitchClassSet | None = None
+    value: Optional[PitchClassSet] = None
 
     def filter(self, object: PitchSet) -> bool:
-        #
-        return True  # WRITE THIS
+        assert self.value is not None
+
+        for pitch in object:
+            if not self.value.contains(pitch):
+                return False
+        
+        return True 
 

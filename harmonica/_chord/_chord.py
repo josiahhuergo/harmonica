@@ -2,9 +2,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 from itertools import combinations
 from math import ceil
+from typing import TYPE_CHECKING
 
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
 from harmonica.utility import cumsum, diff
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from harmonica.chord import FindPitchSets
 
 
 @dataclass
@@ -24,11 +30,11 @@ class PitchSet:
     def __getitem__(self, item: int) -> int:
         return self.pitches[item]
     
+    def __iter__(self):
+        return iter(self.pitches)
+    
     def __add__(self, amount: int) -> PitchSet:
-        pset = PitchSet(self.pitches)
-        pset.transpose(amount)
-
-        return pset
+        return self.get_transposed(amount)
     
     def __sub__(self, amount: int) -> PitchSet:
         pset = pset = PitchSet(self.pitches)
@@ -47,7 +53,7 @@ class PitchSet:
         for i in range(len(self.pitches)):
             self.pitches[i] += amount
     
-    def transposed(self, amount: int) -> PitchSet:
+    def get_transposed(self, amount: int) -> PitchSet:
         """Returns a transposed pitch set."""
         
         return PitchSet([pitch + amount for pitch in self.pitches])
@@ -57,7 +63,7 @@ class PitchSet:
 
         self.transpose(-min(self.pitches))
     
-    def normalized(self) -> PitchSet:
+    def get_normalized(self) -> PitchSet:
         """Returns a normalized pitch set."""
 
         return PitchSet([pitch - min(self.pitches) for pitch in self.pitches])
@@ -91,6 +97,14 @@ class PitchSet:
         return PitchClassSet(pcset, modulus)
 
     ## ANALYZE ##
+
+    @staticmethod
+    def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
+        """Convenience method that allows the syntax `PitchSet.find()`."""
+
+        from harmonica.chord import FindPitchSets
+
+        return FindPitchSets(min_pitch, max_pitch)
 
     @property
     def shape(self) -> PitchSetShape:

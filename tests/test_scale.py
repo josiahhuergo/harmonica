@@ -22,6 +22,10 @@ class TestPitchClassSet:
         scale = PitchClassSet([2,4,5,8,9,11], 12)
         func = ScaleFunc([2,3,6,7,9,12], 2)
         assert scale.scale_function(2) == func
+
+    def test_contains_pitch(self):
+        scale = PitchClassSet([2,4,5,7,10], modulus=11)
+        assert scale.contains(21) is True and scale.contains(20) is False
         
 
 class TestPCSetWithRoot:

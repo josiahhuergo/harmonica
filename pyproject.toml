@@ -1,0 +1,38 @@
+[project]
+name = "harmonica"
+version = "0.1.0"
+description = "A Python library for the generation, analysis and transformation of music theoretical objects."
+authors = [
+    {name = "Josiah Huergo", email = "josiah@siahbug.com"}
+]
+license = "MIT"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pyright]
+typeCheckingMode = "off"
+
+[tool.mypy]
+# Enable standard mypy checking
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = false
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+# Exclude tests and docs
+exclude = [
+    "./tests/*",
+    "./docs/*"
+]

@@ -76,6 +76,20 @@ class PitchClassSet:
 
     ## ANALYSIS ##
 
+    def scale_function(self, root: int) -> ScaleFunc:
+        """Returns a scale function that maps to the same pitches as this pitch class set.
+        
+        For example, if we have a pitch class set representing D major (and its modes) 
+        `{1,2,4,6,7,9,11} mod 12` and we specify 6 as the root then this will return 
+        `[1,3,5,7,8,10,12] + 6`."""
+        
+        return ScaleFunc(self.get_normalized(root).pitch_classes[1:] + [self.modulus], min(self.pitch_classes))
+    
+    def contains(self, pitch: int) -> bool:
+        """Returns true if a pitch belongs to a pitch class in the set."""
+
+        return True if pitch % self.modulus in self.pitch_classes else False
+
     @property
     def interval_network(self) -> list[list]:
 
@@ -96,15 +110,6 @@ class PitchClassSet:
             if scalar_iclass[1] != 0:
                 ic_vector[scalar_iclass[1] - 1] += 1
         return [2] #tuple(ic_vector)
-    
-    def scale_function(self, root: int) -> ScaleFunc:
-        """Returns a scale function that maps to the same pitches as this pitch class set.
-        
-        For example, if we have a pitch class set representing D major (and its modes) 
-        `{1,2,4,6,7,9,11} mod 12` and we specify 6 as the root then this will return 
-        `[1,3,5,7,8,10,12] + 6`."""
-        
-        return ScaleFunc(self.get_normalized(root).pitch_classes[1:] + [self.modulus], min(self.pitch_classes))
     
     @property
     def size(self) -> int:
