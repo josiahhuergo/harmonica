@@ -4,14 +4,11 @@ from itertools import combinations
 from math import ceil
 from typing import TYPE_CHECKING
 
-from harmonica.scale import PitchClassSet
+from harmonica._scale import PitchClassSet
 from harmonica.utility import cumsum, diff
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from harmonica.chord import FindPitchSets
-
+    from harmonica._chord import FindPitchSets
 
 @dataclass
 class PitchSet:
@@ -45,6 +42,9 @@ class PitchSet:
     def __mod__(self, modulus: int) -> PitchClassSet:
         return self.classify(modulus)
 
+    def __hash__(self):
+        return hash(tuple(pitch for pitch in self.pitches))
+
     ## TRANSFORM ##
 
     def transpose(self, amount: int):
@@ -69,11 +69,14 @@ class PitchSet:
         return PitchSet([pitch - min(self.pitches) for pitch in self.pitches])
 
     def harmonize(self, target_pitch: int, target_pitch_index: int):
-        """Transposes the pitch set so the pitch at `index` is equal to `pitch`."""
+        """Transposes the pitch set so the pitch at `target_pitch_index` is equal to `target_pitch`."""
 
         self.pitches = [
             pitch + (target_pitch - self.pitches[target_pitch_index]) for pitch in self.pitches
         ]
+    
+    def get_harmonized(self, target_pitch: int, target_pitch_index: int):
+        """Returns transposed pitch set. Immutable variant of `harmonize()`."""
     
     def invert(self, amount: int, modulus: int = 12):
         """Treats the pitch set as a chord-scale with respect to a given modulus - 12 by default - 
@@ -102,7 +105,7 @@ class PitchSet:
     def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
         """Convenience method that allows the syntax `PitchSet.find()`."""
 
-        from harmonica.chord import FindPitchSets
+        from harmonica._chord import FindPitchSets
 
         return FindPitchSets(min_pitch, max_pitch)
 
@@ -113,7 +116,7 @@ class PitchSet:
         return PitchSetShape(diff(self.pitches))
 
     @property
-    def size(self) -> int:
+    def cardinality(self) -> int:
         """The number of pitches in the set."""
 
         return len(self.pitches)
@@ -125,11 +128,27 @@ class PitchSet:
         return max(self.pitches) - min(self.pitches)
     
     @property
-    def interval_network(self) -> dict:
-        """Returns a dict that maps pairs of pitches to the intervals between them. 
+    def interval_spectrum(self) -> list[list[int]]:
+        """Returns a list of lists that describes intervals between notes that
+        are one space apart, then two spaces apart, etc.
+        
+        >>> PitchSet([0,4,7,14]).interval_spectrum
+        [[4,3,7], [7,10], [14]]]
+         
         This accounts for every interval present in the pitch set."""
-
-        return { pair : pair[1] - pair[0] for pair in combinations(self.pitches, 2)}
+        
+        if self.cardinality <= 1:
+            return []
+        
+        spectrum: list[list[int]] = []
+        
+        for jump in range(1, self.cardinality):
+            diffs: list[int] = []
+            for pos in range(self.cardinality - jump):
+                diffs.append(self.pitches[pos + jump] - self.pitches[pos])
+            spectrum.append(diffs)
+            
+        return spectrum
 
 @dataclass
 class PitchSetShape:

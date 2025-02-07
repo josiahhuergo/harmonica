@@ -7,7 +7,7 @@ __all__ = [
     # _scale
     "PitchClassSet", 
     "PCSetWithRoot", 
-    "ScaleShape",
+    "ScaleStructure",
     "ScaleFunc",
 
     # _find

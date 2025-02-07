@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+import math
+from typing import Iterable, overload
 
 from harmonica.utility import cumsum, diff
 
-__all__ = ["PitchSequence", "PitchContour", "MelodicFunc", "PCSequence", "Polyphony"]
+__all__ = ["PitchSeq", "PitchSeqShape", "MelodicFunc", "PCSequence", "Polyphony"]
 
 @dataclass
-class PitchSequence:
+class PitchSeq:
     """A sequence of pitches used to represent a melody."""
 
     ## DATA ##
@@ -23,8 +25,8 @@ class PitchSequence:
     def __len__(self) -> int:
         return len(self.pitches)
     
-    def __add__(self, amount: int) -> PitchSequence:
-        return PitchSequence([pitch + amount for pitch in self.pitches])
+    def __add__(self, amount: int) -> PitchSeq:
+        return PitchSeq([pitch + amount for pitch in self.pitches])
     
     ## TRANSFORM ##
 
@@ -47,14 +49,15 @@ class PitchSequence:
         return len(self.pitches)
     
     @property
-    def contour(self) -> PitchContour:
-        """Returns the melodic contour of the pitch sequence."""
+    def shape(self) -> PitchSeqShape:
+        """Returns the sequence of intervals between successive pitches in the sequence."""
 
-        return PitchContour(diff(self.pitches))
+        return PitchSeqShape(diff(self.pitches))
 
 @dataclass
-class PitchContour:
-    """A sequence of intervals used to represent a melodic contour."""
+class PitchSeqShape:
+    """A sequence of intervals used to describe the difference between successive 
+    pitches in a pitch sequence."""
 
     ## DATA ##
 
@@ -70,19 +73,19 @@ class PitchContour:
     
     ## GENERATE ##
 
-    def stamp(self, starting_pitch: int) -> PitchSequence:
-        """Produces a pitch sequence by "stamping" the contour at a given pitch."""
+    def stamp(self, starting_pitch: int) -> PitchSeq:
+        """Produces a pitch sequence by "stamping" the shape at a given pitch."""
 
-        return PitchSequence(cumsum(self.intervals, starting_pitch))
+        return PitchSeq(cumsum(self.intervals, starting_pitch))
     
     ## ANALYZE ##
 
     @property
     def length(self) -> int:
-        """Returns the length of the melodic shape."""
+        """Returns the length of the interval sequence."""
 
         return len(self.intervals)
-    
+
 @dataclass
 class MelodicFunc:
     """A melodic function is a pattern of pitches along with a transposition
@@ -93,7 +96,171 @@ class MelodicFunc:
     pattern: list[int]
     transposition: int
     
-    # RESEARCH FURTHER
+    # FIX ALL THIS
+    
+    # def __post_init__(self):
+    #     assert len(set(self.pattern)) == len(self.pattern), 'Elements of pattern must be unique.'
+    #     assert self.pattern == sorted(self.pattern), 'Elements of pattern must be in ascending order.'
+    #     assert all([harmonic > 0 for harmonic in self.pattern]), 'Elements of pattern must be greater than 0.'
+    
+    # @overload
+    # def __call__(self, n: int) -> int: ...
+    # @overload
+    # def __call__(self, n: Iterable[int]) -> list[int]: ...
+
+    # def __call__(self, n):
+    #     if isinstance(n, int):
+    #         return self.eval(n)
+    #     if isinstance(n, Iterable):
+    #         return self.eval(n)
+    
+    # def __add__(self, amount: int):
+    #     self.transpose(amount)
+
+    # ## TRANSFORM ##
+    
+    # def transpose(self, amount: int):
+    #     """Shifts the transposition of the scale function."""
+
+    #     self.transposition += amount
+
+    # def rotate_mode_parallel(self, amount: int):
+    #     """Rotates to a parallel mode, retaining the current transposition."""
+
+    #     sub = self._rmap[amount % self.size]
+    #     new_pattern = [
+    #         (pitch_class - sub) % self.modulus for pitch_class in self._rmap
+    #     ]
+    #     new_pattern.sort()
+    #     self.pattern = new_pattern[1:] + [self.modulus]
+    
+    # def rotate_mode_relative(self, amount: int):
+    #     """Rotates to a relative mode, changing the transposition."""
+
+    #     self.transposition += (self.eval(amount) - self.transposition)
+    #     self.rotate_mode_parallel(amount)
+    
+    # def eval_rot(self, n: int) -> int:
+    #     """Evaluates the scale function and then rotates to the relative mode
+    #     that's centered on the evaluated pitch."""
+
+    #     eval = self.eval(n)
+    #     self.rotate_mode_relative(n)
+
+    #     return eval
+
+    # ## GENERATE ##
+    
+    # def compose(self, other: MelodicFunc) -> MelodicFunc:
+    #     """Composes this scale function with another."""
+
+    #     transposition = self.eval(other.eval(0))
+    #     size = self.size * other.size // math.gcd(self.size, other.modulus)
+    #     pattern = [
+    #         chroma - transposition for chroma in self.eval(other.eval(range(1, size + 1)))
+    #     ]
+        
+    #     return MelodicFunc(pattern, transposition)
+    
+    # def to_pcset(self) -> PitchClassSet:
+    #     """Returns the pitch class set corresponding to this scale function."""
+
+    #     return self.structure.stamp_to_pcset(self.transposition)
+    
+    # ## ANALYZE ##
+
+    # @overload
+    # def eval(self, n: int) -> int: ...
+    # @overload 
+    # def eval(self, n: Iterable[int]) -> list[int]: ...
+
+    # def eval(self, n: int | Iterable[int]) -> int | list[int]:
+    #     """Evaluates the scale function.
+        
+    #     The object itself can be called like a function, yielding this evaluation.
+        
+    #     >>> scale = ScaleFunc([2,3,5,7,9,10,12],2)
+    #     >>> scale(6)
+    #     12  
+        
+    #     You can also evaluate a list of integers:
+        
+    #     >>> scale([1,3,4,6])
+    #     [4,7,9,12]
+    #     """
+
+    #     if isinstance(n, int):
+    #         return self._eval(n)
+    #     if isinstance(n, Iterable):
+    #         return [self._eval(i) for i in n]
+
+    # def _eval(self, n: int) -> int:
+    #     r = n % len(self.pattern)
+    #     q = int((n - r)) / self.size
+
+    #     # Returns quotient * modulus + remainder + transposition
+    #     return int(q * self.modulus + self._rmap[r]) + self.transposition
+    
+    # def count_transpositions(self) -> int:
+    #     """Counts the number of unique transpositions of this scale function."""
+
+    #     return self.structure.count_transpositions()
+    
+    # def count_modes(self) -> int:
+    #     """Counts the number of distinct modes of this scale function."""
+
+    #     return self.structure.count_modes()
+    
+    # def maps_to_pitch(self, pitch: int) -> bool:
+    #     """Returns true if this scale function has an input that maps to `pitch`."""
+
+    #     r = (pitch - self.transposition) % self.modulus
+
+    #     return True if r in self._rmap else False
+    
+    # @overload
+    # def index(self, pitch: int) -> int: ...
+    # @overload
+    # def index(self, pitch: list[int]) -> list[int]: ...
+
+    # def index(self, pitch: int | list[int]) -> int | list[int]:
+    #     """Returns the index that maps to `pitch` in this scale function.
+        
+    #     Example, the input that produces the pitch 25 from the scale function 
+    #     `[2,4,5,7,9,11,12] + 4` is 12.
+        
+    #     You can also check the indexes of a list of integers."""
+
+    #     if isinstance(pitch, int):
+    #         return self._index(pitch)
+    #     if isinstance(pitch, list):
+    #         return [self._index(p) for p in pitch]        
+    
+    # def _index(self, pitch: int) -> int:
+    #     assert self.maps_to_pitch(pitch), "Scale function must map to pitch."
+    #     r = (pitch - self.transposition) % self.modulus
+
+    #     return self._rmap.index(r) + (((pitch - self.transposition) // self.modulus) * self.size)
+    
+    # @property
+    # def modulus(self) -> int:
+    #     """Returns the modulus of the scale function."""
+
+    #     return self.pattern[-1]
+
+    # @property
+    # def size(self) -> int:
+    #     """Returns the size of the scaling pattern."""
+
+    #     return len(self.pattern)
+    
+    # @property
+    # def structure(self) -> ScaleStructure:
+    #     return ScaleStructure(cycle_diff(self._rmap, self.modulus, 0))
+
+    # @property
+    # def _rmap(self) -> list[int]:  # residue map
+    #     return [0] + self.pattern[:-1]
 
 @dataclass 
 class PCSequence:
@@ -131,7 +298,7 @@ class Polyphony:
 
     ## DATA ##
 
-    pitch_sequences: list[PitchSequence]
+    pitch_sequences: list[PitchSeq]
 
     ## MAGIC METHODS ##
 

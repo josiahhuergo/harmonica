@@ -1,10 +1,11 @@
 import pytest
 from harmonica.chord import PitchSet, PitchSetShape, FindPitchSets
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
+from harmonica.utility import print_iter
 
 class TestPitchSet:
     def test_size(self):
-        assert PitchSet([0,4,7,9,11]).size == 5
+        assert PitchSet([0,4,7,9,11]).cardinality == 5
 
     def test_span(self):
         assert PitchSet([-9,-6,1,9,14]).span == 23
@@ -18,6 +19,9 @@ class TestPitchSet:
         pset = PitchSet([0,4,7,10])
         pset2 = pset + 4
         assert pset2.pitches == [4,8,11,14]
+
+    def test_eq(self):
+        assert PitchSet([0,4,7]) == PitchSet([0,4,7])
 
     def test_sub(self):
         pset = PitchSet([4,8,11,14])
@@ -48,17 +52,14 @@ class TestPitchSet:
         pset.harmonize(tp, tpi)
         assert pset == pset_harm
     
-    def test_interval_network(self):
-        pset = PitchSet([0,7,14,16])
-        ivl_net = {
-            (0,7): 7,
-            (0,14): 14,
-            (0,16): 16,
-            (7,14): 7,
-            (7,16): 9,
-            (14,16): 2
-        }
-        assert pset.interval_network == ivl_net
+    def test_interval_spectrum(self):
+        pset = PitchSet([0,4,7,14])
+        spectrum = [
+            [4,3,7],
+            [7,10],
+            [14]
+        ]
+        assert pset.interval_spectrum == spectrum
     
     def test_invert(self):
         pset = PitchSet([4,6,9,13])
@@ -76,6 +77,9 @@ class TestPitchSetShape:
         shape = PitchSetShape([7,7,2,7])
         assert shape[2] == 2
     
+    def test_eq(self):
+        assert PitchSetShape([2,2,21]) == PitchSetShape([2,2,21])
+    
     def test_stamp(self):
         shape = PitchSetShape([5,2,6])
         assert shape.stamp(2) == PitchSet([2,7,9,15])
@@ -85,5 +89,59 @@ class TestPitchSetShape:
         assert shape.span == 12
 
 class TestFindPitchSets:
-    def test_in_pcset(self):
-        in_pcset = FindPitchSets()
+    def test_brute_force(self):
+        brute = PitchSet.find(
+                            60,65
+                        ).cardinality(
+                            3
+                        ).collect()
+        
+        results = set(
+            PitchSet(x) for x in [
+                [60,61,62], [60,61,63], [60,61,64], [60,61,65],
+                [60,62,63], [60,62,64], [60,62,65], 
+                [60,63,64], [60,63,65],
+                [60,64,65],
+                [61,62,63], [61,62,64], [61,62,65],
+                [61,63,64], [61,63,65],
+                [61,64,65],
+                [62,63,64], [62,63,65],
+                [62,64,65],
+                [63,64,65]
+            ]
+        )
+
+        assert brute == results
+
+    def test_pcset_search(self):
+        in_pcset = PitchSet.find(
+                                60,66
+                            ).in_pcset(
+                                PitchClassSet([0,2,4,5,7,9,10], 12)
+                            ).collect()
+
+        results = set(
+            PitchSet(x) for x in [
+                [60], [62], [64], [65],
+                [60, 62], [60, 64], [60, 65], [62, 64], [62, 65], [64, 65],
+                [60, 62, 64], [60, 62, 65], [60, 64, 65], [62, 64, 65],
+                [60, 62, 64, 65]
+            ]
+        )
+
+        assert in_pcset == results
+
+    def test_transpositions(self):
+        has_shape = PitchSet.find(
+                                60,66
+                            ).has_shape(
+                                PitchSetShape([2,1])
+                            ).collect()
+        
+        results = set(
+            PitchSet(x) for x in [
+                [60,62,63], [61,63,64], [62,64,65], [63,65,66]
+            ]
+        )
+
+        assert has_shape == results

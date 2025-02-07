@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from harmonica.chord import PitchSet
+from harmonica._chord import PitchSet
 
 __all__ = ["PitchSetSeq"]
 
@@ -35,9 +35,9 @@ class PitchSetSeq:
         if len(self.pitch_sets) == 0:
             return True
         
-        size = self.pitch_sets[0].size
+        cardinality = self.pitch_sets[0].cardinality
 
-        if all([x.size == size for x in self.pitch_sets]):
+        if all([x.cardinality == cardinality for x in self.pitch_sets]):
             return True
         else:
             return False
