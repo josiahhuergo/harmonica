@@ -1,4 +1,5 @@
-from ._chord import *
-from ._find import *
+from ._pitchset import *
+from ._pitchsetshape import *
+from ._find_pitchset import *
 
 

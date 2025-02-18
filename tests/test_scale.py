@@ -49,6 +49,11 @@ class TestPitchClassSet:
         scale = PitchClassSet([0,2,5,7,9,11], 12)
         assert scale.interval_vector == (1,4,3,2,4,1)
         
+    def test_prime(self):
+        scale = PitchClassSet([0,2,3,5,6,8,9,11],12)
+        prime = PitchClassSet([0,2],3)
+        assert scale.prime == prime
+        
 
 class TestPCSetWithRoot:
     def test_structure(self):
@@ -73,6 +78,11 @@ class TestPCSetWithRoot:
         rot = PCSetWithRoot([1,2,4,6,8,9,11], 12, 4)
         scale.rotate_mode_parallel(2)
         assert scale == rot
+        
+    def test_prime(self):
+        scale = PCSetWithRoot([0,2,3,5,6,8,9,11],12, 5)
+        prime = PCSetWithRoot([0,2],3, 2)
+        assert scale.prime == prime
 
 class TestScaleStructure:
     def test_stamp_to_rooted_pcset(self):
@@ -86,6 +96,11 @@ class TestScaleStructure:
         trans = 4
         func = ScaleFunc([2,4,7,9,11,12],4)
         assert structure.stamp_to_scale_func(trans) == func
+        
+    def test_prime(self):
+        structure = ScaleStructure([2,2,1,2,2,1,2,2,1])
+        prime = ScaleStructure([2,2,1])
+        assert structure.prime == prime
 
 class TestScaleFunc:
     def test_rotate_mode_relative(self):

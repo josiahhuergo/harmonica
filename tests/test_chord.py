@@ -1,7 +1,6 @@
 import pytest
-from harmonica.chord import PitchSet, PitchSetShape, FindPitchSets
+from harmonica.chord import PitchSet, PitchSetShape
 from harmonica.scale import PitchClassSet
-from harmonica.utility import print_iter
 
 class TestPitchSet:
     def test_size(self):

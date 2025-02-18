@@ -3,6 +3,6 @@ A Python library for the generation, analysis and transformation of music theore
 
 # TODO
 - Implement search tools for PitchClassSets, ScaleFuncs, PitchSeqs, etc.
-- Put objects in their own private submodules
 - Sort out MelodicFunc, names & concepts
 - Fill out docs with ample context and usage examples
+- Add modules for generating music, creating MIDI files & streams

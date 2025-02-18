@@ -21,12 +21,12 @@ class FindPitchSets:
     
     You call criteria setting methods and then return results with collect()."""
 
-    criteria: PSetCriteria
+    criteria: Criteria
 
     def __init__(self, min_pitch: int, max_pitch: int):
         assert min_pitch < max_pitch, "Min pitch must be less than max pitch."
 
-        self.criteria = PSetCriteria(min_pitch, max_pitch)
+        self.criteria = Criteria(min_pitch, max_pitch)
         
     ## SETTING CRITERIA ##
 
@@ -142,25 +142,25 @@ class FindPitchSets:
 
         return results
 
-class PSetCriteria:
+class Criteria:
     min_pitch: int
     max_pitch: int
-    cardinality: PSetCardinality
-    min_card: PSetMinCard
-    max_card: PSetMaxCard 
-    has_shape: PSetHasShape 
-    has_subshape: PSetHasSubshape 
-    in_pcset: PSetInPCSet
+    cardinality: Cardinality
+    min_card: MinCard
+    max_card: MaxCard 
+    has_shape: HasShape 
+    has_subshape: HasSubshape 
+    in_pcset: InPCSet
 
     def __init__(self, min_pitch: int, max_pitch: int):
         self.min_pitch = min_pitch
         self.max_pitch = max_pitch
-        self.cardinality = PSetCardinality()
-        self.min_card = PSetMinCard()
-        self.max_card = PSetMaxCard()
-        self.has_shape = PSetHasShape()
-        self.has_subshape = PSetHasSubshape()
-        self.in_pcset = PSetInPCSet()
+        self.cardinality = Cardinality()
+        self.min_card = MinCard()
+        self.max_card = MaxCard()
+        self.has_shape = HasShape()
+        self.has_subshape = HasSubshape()
+        self.in_pcset = InPCSet()
 
     def get(self, excludes: list[str] = []) -> dict[str, Criterion]:
         """Returns a dict containing criterion objects which have non-None values and
@@ -187,7 +187,7 @@ class Criterion:
     def filter(self, object) -> bool: ...
 
 @dataclass
-class PSetCardinality(Criterion):
+class Cardinality(Criterion):
     value: Optional[int] = None
 
     def filter(self, object: PitchSet) -> bool:
@@ -197,7 +197,7 @@ class PSetCardinality(Criterion):
             return False
 
 @dataclass
-class PSetMinCard(Criterion):
+class MinCard(Criterion):
     value: Optional[int] = None
 
     def filter(self, object: PitchSet) -> bool:
@@ -209,7 +209,7 @@ class PSetMinCard(Criterion):
             return False
 
 @dataclass
-class PSetMaxCard(Criterion):
+class MaxCard(Criterion):
     value: Optional[int] = None
 
     def filter(self, object: PitchSet) -> bool:
@@ -221,7 +221,7 @@ class PSetMaxCard(Criterion):
             return False
 
 @dataclass
-class PSetHasShape(Criterion):
+class HasShape(Criterion):
     value: Optional[PitchSetShape] = None
 
     def filter(self, object: PitchSet) -> bool:
@@ -231,14 +231,14 @@ class PSetHasShape(Criterion):
             return False
 
 @dataclass
-class PSetHasSubshape(Criterion):
+class HasSubshape(Criterion):
     value: Optional[PitchSetShape] = None
 
     def filter(self, object: PitchSet) -> bool:
         return True  # WRITE THIS
 
 @dataclass
-class PSetInPCSet(Criterion):
+class InPCSet(Criterion):
     value: Optional[PitchClassSet] = None
 
     def filter(self, object: PitchSet) -> bool:

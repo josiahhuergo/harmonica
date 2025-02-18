@@ -1,14 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from itertools import combinations
 from math import ceil
 from typing import TYPE_CHECKING
 
 from harmonica._scale import PitchClassSet
-from harmonica.utility import cumsum, diff
+from harmonica.utility import diff
 
 if TYPE_CHECKING:
-    from harmonica._chord import FindPitchSets
+    from harmonica._chord import FindPitchSets, PitchSetShape
+    
+
 
 @dataclass
 class PitchSet:
@@ -104,14 +105,16 @@ class PitchSet:
     @staticmethod
     def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
         """Convenience method that allows the syntax `PitchSet.find()`."""
-
+        
         from harmonica._chord import FindPitchSets
-
+        
         return FindPitchSets(min_pitch, max_pitch)
 
     @property
     def shape(self) -> PitchSetShape:
         """The sequence of intervals between adjacent pitches in the set."""
+        
+        from harmonica._chord import PitchSetShape
 
         return PitchSetShape(diff(self.pitches))
 
@@ -149,47 +152,3 @@ class PitchSet:
             spectrum.append(diffs)
             
         return spectrum
-
-@dataclass
-class PitchSetShape:
-    """A sequence of positive intervals that describes the intervallic shape of a pitch set."""
-
-    ## DATA ##
-
-    intervals: list[int]
-
-    ## MAGIC METHODS ##
-
-    def __post_init__(self):
-        assert not any(
-            [interval <= 0 for interval in self.intervals]
-        ), 'Intervals in pitch set shape must be greater than 0.'
-
-    def __getitem__(self, item: int) -> int:
-        # Access pitch set shape like a list for convenience.
-        return self.intervals[item]
-    
-    ## TRANSFORM ##
-
-    def invert_around_voice(self, modulus: int, voice: int):
-        """Inverts a chord with respect to a modulus, fixed around a voice."""
-
-        # RESEARCH FURTHER
-
-        pass
-
-    ## GENERATE ##
-
-    def stamp(self, lowest_pitch: int) -> PitchSet:
-        """Constructs a pitch set using the shape of intervals."""
-
-        return PitchSet(cumsum(self.intervals, lowest_pitch))
-    
-    ## ANALYZE
-    
-    @property
-    def span(self) -> int:
-        """How many semitones the shape spans."""
-
-        return sum(self.intervals)
-

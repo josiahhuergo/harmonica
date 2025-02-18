@@ -14,7 +14,7 @@ class PitchClassSet:
     
     `{0,2,4,5,7,9,11} mod 12`, or `PitchClassSet([0,2,4,5,7,9,11], 12)`, represents the pitches mapped to
     by C major, D dorian, E phrygian, etc."""
-    
+
     ## DATA ##
 
     pitch_classes: list[int]
@@ -157,6 +157,14 @@ class PitchClassSet:
         intervals = cycle_diff(self.pitch_classes, self.modulus, 0)
 
         return ScaleStructure(intervals)
+    
+    @property
+    def prime(self) -> PitchClassSet:
+        """Returns the prime subscale of the pitch class set, which has an aperiodic
+        structure."""
+        
+        return self.structure.prime.stamp_to_pcset(self.pitch_classes[0])
+        
 
 @dataclass
 class PCSetWithRoot(PitchClassSet):
@@ -218,6 +226,17 @@ class PCSetWithRoot(PitchClassSet):
         intervals = cycle_diff(self.pitch_classes, self.modulus, self.pitch_classes.index(self.root))
 
         return ScaleStructure(intervals)
+    
+    @property
+    def prime(self) -> PCSetWithRoot:
+        """Returns the prime subscale of the pitch class set, which has an aperiodic
+        structure."""
+        
+        root_index = self.pitch_classes.index(self.root)
+        prime_len = self.structure.prime.size
+        root = self.pitch_classes[root_index % prime_len]
+        
+        return self.structure.prime.stamp_to_pcset_with_root(root)
 
 @dataclass
 class ScaleStructure:
@@ -280,6 +299,13 @@ class ScaleStructure:
         would have."""
 
         return len(repeating_subseq(self.intervals))
+    
+    @property
+    def prime(self) -> ScaleStructure:
+        """Returns the structure of the prime subscale. For example, if the structure 
+        is [2,1,2,1,2,1,2,1], then its prime is [2,1]."""
+        
+        return ScaleStructure(repeating_subseq(self.intervals))
     
     @property
     def size(self) -> int:
