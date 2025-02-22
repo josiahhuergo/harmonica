@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from harmonica._chord import PitchSet
+from harmonica.chord import PitchSet
 
 __all__ = ["PitchSetSeq"]
 

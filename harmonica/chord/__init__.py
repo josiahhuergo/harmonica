@@ -1,6 +1,8 @@
 """Objects and algorithms pertaining to chords."""
 
-from harmonica._chord import *
+from ._pitchset import *
+from ._pitchsetshape import *
+from ._find_pitchsets import *
 
 __all__ = [
     

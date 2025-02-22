@@ -1,6 +1,7 @@
 """Objects and algorithms pertaining to scales."""
 
-from harmonica._scale import *
+from ._base import *
+from ._find_pcset import *
 
 __all__ = [
 

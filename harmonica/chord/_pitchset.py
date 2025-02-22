@@ -3,11 +3,11 @@ from dataclasses import dataclass
 from math import ceil
 from typing import TYPE_CHECKING
 
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
 from harmonica.utility import diff
 
 if TYPE_CHECKING:
-    from harmonica._chord import FindPitchSets, PitchSetShape
+    from harmonica.chord import FindPitchSets, PitchSetShape
     
 
 
@@ -106,7 +106,7 @@ class PitchSet:
     def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
         """Convenience method that allows the syntax `PitchSet.find()`."""
         
-        from harmonica._chord import FindPitchSets
+        from harmonica.chord import FindPitchSets
         
         return FindPitchSets(min_pitch, max_pitch)
 
@@ -114,7 +114,7 @@ class PitchSet:
     def shape(self) -> PitchSetShape:
         """The sequence of intervals between adjacent pitches in the set."""
         
-        from harmonica._chord import PitchSetShape
+        from harmonica.chord import PitchSetShape
 
         return PitchSetShape(diff(self.pitches))
 

@@ -10,9 +10,9 @@ from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
 from harmonica.utility import powerset
-from harmonica._chord import PitchSet, PitchSetShape
+from harmonica.chord import PitchSet, PitchSetShape
 
 type PitchSets = set[PitchSet]
 

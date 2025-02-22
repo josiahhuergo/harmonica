@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from harmonica._scale import PitchClassSet
+from harmonica.scale import PitchClassSet
 
 class FindPCSets:
     """Object with a dict of strings which specify what criteria to use
