@@ -40,6 +40,11 @@ class Timeline:
         
         self.events.append(event)
         self._sort()
+        
+    def add_note(self, onset: Fraction, pitch: int, duration: Fraction):
+        """Adds a note to the timeline."""
+        
+        self.add_event(Note(onset, pitch, duration))
     
     def get_notes(self) -> list[Note]:
         """Returns a list of all the notes on the timeline."""

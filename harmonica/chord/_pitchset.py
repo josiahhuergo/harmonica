@@ -1,15 +1,15 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from fractions import Fraction
 from math import ceil
 from typing import TYPE_CHECKING
 
 from harmonica.scale import PitchClassSet
+from harmonica.timeline import Timeline
 from harmonica.utility import diff
 
 if TYPE_CHECKING:
     from harmonica.chord import FindPitchSets, PitchSetShape
-    
-
 
 @dataclass
 class PitchSet:
@@ -152,3 +152,15 @@ class PitchSet:
             spectrum.append(diffs)
             
         return spectrum
+
+    ## LISTEN ##
+    
+    def play(self, dur: Fraction = Fraction(6)):
+        """Plays the pitch set real time as MIDI."""
+        
+        tl = Timeline()
+        
+        for pitch in self.pitches:
+            tl.add_note(Fraction(), pitch, dur)
+            
+        tl.play_midi()

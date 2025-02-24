@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from fractions import Fraction
 from typing import TYPE_CHECKING
 
 from harmonica.utility import cumsum
@@ -42,3 +43,10 @@ class PitchSetShape:
 
         return sum(self.intervals)
 
+    ## LISTEN ##
+    
+    def play(self, dur: Fraction = Fraction(6), pitch: int = 60):
+        """Plays the pitch set shape real time as MIDI. 
+        To do so, the shape is stamped at `ref_pitch` and then played."""
+        
+        self.stamp(pitch).play(dur)
