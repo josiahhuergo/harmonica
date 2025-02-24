@@ -31,7 +31,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 sys.path.insert(0, os.path.abspath('../../harmonica'))
 
 templates_path = ['_templates']
-exclude_patterns = []
+exclude_patterns: list = []
 
 autodoc_member_order = 'bysource'
 
