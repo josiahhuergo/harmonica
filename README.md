@@ -1,5 +1,5 @@
 # harmonica
-A Python library for the generation, analysis and transformation of music theoretical objects.
+A Python library for the generation, analysis and transformation of musical objects.
 
 # TODO
 - Implement search tools for PitchClassSets, ScaleFuncs, PitchSeqs, etc.
