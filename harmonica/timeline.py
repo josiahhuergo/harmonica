@@ -25,11 +25,7 @@ class Note(Event):
 
 @dataclass
 class Timeline:
-    """Arrangement of events ordered by onset time.
-    
-    Timelines are events themselves, so they can contain other timelines.
-    
-    When playing a timeline, its tempo overrides that of its children."""
+    """Arrangement of events ordered by onset time."""
     
     events: list[Event] = field(default_factory=list)   
     tempo: int = field(default=120)
