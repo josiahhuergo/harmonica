@@ -101,7 +101,7 @@ class Timeline:
     
     def _sort(self):
         self.events.sort(key=lambda x: x.onset)
-        
+
 def _frac_to_ticks(frac: Fraction, tpb: int) -> int:
     return int(tpb * frac)
     
