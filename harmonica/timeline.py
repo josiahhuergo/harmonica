@@ -2,106 +2,114 @@
 
 from dataclasses import dataclass, field
 from fractions import Fraction
-import mido  
+import mido
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
+
 
 @dataclass
 class Event:
     """An event is anything that occurs at a specific moment in time.
-    
-    Its onset is represented as a fraction. The unit of time is **beats**. 
-    
-    A beat is an abstract unit of time which can be converted to seconds 
+
+    Its onset is represented as a fraction. The unit of time is **beats**.
+
+    A beat is an abstract unit of time which can be converted to seconds
     given a tempo (in beats per minute)."""
-    
+
     onset: Fraction
-    
+
+
 @dataclass
 class Note(Event):
     """A note event has a pitch and duration."""
-    
+
     pitch: int
     duration: Fraction
+
 
 @dataclass
 class Timeline:
     """Arrangement of events ordered by onset time."""
-    
-    events: list[Event] = field(default_factory=list)   
+
+    events: list[Event] = field(default_factory=list)
     tempo: int = field(default=120)
-    outport: str = 'Microsoft GS Wavetable Synth 0' 
-    
+    outport: str = "Microsoft GS Wavetable Synth 0"
+
+    def __post_init__(self):
+        self.events.sort(key=lambda e: e.onset)
+
     def add_event(self, event: Event):
         """Adds an event to the timeline."""
-        
+
         self.events.append(event)
         self._sort()
-        
+
     def add_note(self, onset: Fraction, pitch: int, duration: Fraction):
         """Adds a note to the timeline."""
-        
+
         self.add_event(Note(onset, pitch, duration))
-    
+
     def get_notes(self) -> list[Note]:
         """Returns a list of all the notes on the timeline."""
-        
+
         return [event for event in self.events if isinstance(event, Note)]
-    
+
     def write_midi(self, filename: str = "temp"):
-        """Writes the notes in the timeline to a MIDI file. Without any arguments, 
+        """Writes the notes in the timeline to a MIDI file. Without any arguments,
         this creates a file called temp.mid by default."""
-        
-        mid: MidiFile = self._create_midi()        
+
+        mid: MidiFile = self._create_midi()
         mid.save(filename + ".mid")
-        
+
     def play_midi(self):
         """Play notes in realtime."""
-        
+
         mid: MidiFile = self._create_midi()
-        
+
         with mido.open_output(self.outport) as port:
-            for msg in mid.play(): 
+            for msg in mid.play():
                 port.send(msg)
-            
+
     def set_midi_port(self, port: str):
         """Sets the name of the port that MIDI messages will be sent to."""
-        
-        self.outport = port            
-        
+
+        self.outport = port
+
     def _create_midi(self) -> MidiFile:
         mid = MidiFile()
-        
         track = MidiTrack()
         mid.tracks.append(track)
-        
-        track.append(MetaMessage('set_tempo', tempo=bpm2tempo(self.tempo)))
-        
-        note_buffer: list[tuple[Fraction, int]] = []
-        last_time: Fraction = Fraction()
-        
+
+        # Set tempo
+        track.append(MetaMessage("set_tempo", tempo=bpm2tempo(self.tempo)))
+
+        # Collect all MIDI events with absolute timing
+        events = []
+
         for note in self.get_notes():
-            for buffer_note in note_buffer[:]:
-                if buffer_note[0] <= note.onset:
-                    t = _frac_to_ticks(buffer_note[0]-last_time, mid.ticks_per_beat)
-                    track.append(Message('note_off', note=buffer_note[1], velocity=127, time=t))
-                    last_time = buffer_note[0]
-                    note_buffer.remove(buffer_note)
-            
-            t = _frac_to_ticks(note.onset-last_time, mid.ticks_per_beat)
-            track.append(Message('note_on', note=note.pitch, velocity=127, time=t))
-            last_time = note.onset
-            note_buffer.append((note.onset + note.duration, note.pitch))
-            
-        for buffer_note in note_buffer:
-            t = _frac_to_ticks(buffer_note[0]-last_time, mid.ticks_per_beat)
-            track.append(Message('note_off', note=buffer_note[1], velocity=127, time=t))
-            last_time = buffer_note[0]
-            
+            onset_ticks = _frac_to_ticks(note.onset, mid.ticks_per_beat)
+            duration_ticks = _frac_to_ticks(note.duration, mid.ticks_per_beat)
+            offset_ticks = onset_ticks + duration_ticks
+
+            # Note on event
+            events.append((onset_ticks, "note_on", note.pitch, 127))
+            # Note off event
+            events.append((offset_ticks, "note_off", note.pitch, 0))
+
+        # Sort by time, with note_off before note_on at same tick
+        events.sort(key=lambda x: (x[0], x[1] == "note_on"))
+
+        # Convert to delta-time messages
+        last_time = 0
+        for abs_time, msg_type, pitch, velocity in events:
+            delta = abs_time - last_time
+            track.append(Message(msg_type, note=pitch, velocity=velocity, time=delta))
+            last_time = abs_time
+
         return mid
-    
+
     def _sort(self):
         self.events.sort(key=lambda x: x.onset)
 
+
 def _frac_to_ticks(frac: Fraction, tpb: int) -> int:
     return int(tpb * frac)
-    
