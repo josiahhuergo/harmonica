@@ -5,12 +5,9 @@ from ._pitchsetshape import *
 from ._find_pitchsets import *
 
 __all__ = [
-    
     # _chord
-    "PitchSet", 
+    "PitchSet",
     "PitchSetShape",
-    
     # _find
-    "FindPitchSets"
-
+    "FindPitchSets",
 ]

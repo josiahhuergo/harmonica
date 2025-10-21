@@ -1,7 +1,10 @@
 """Tools for modeling events distributed on a timeline, including arrangements of notes."""
 
+from copy import deepcopy
 from dataclasses import dataclass, field
 from fractions import Fraction
+import os
+import subprocess
 import mido
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
@@ -59,6 +62,11 @@ class Timeline:
 
         mid: MidiFile = self._create_midi()
         mid.save(filename + ".mid")
+
+    def write_and_open_midi(self, filename: str = "temp"):
+        self.write_midi(filename)
+        subprocess.run(["taskkill", "/f", "/im", "domino.exe"], capture_output=True)
+        os.startfile("C:/Users/Siahbug/Documents/harmonica/" + filename + ".mid")
 
     def play_midi(self):
         """Play notes in realtime."""

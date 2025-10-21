@@ -7,3 +7,4 @@ docs/build
 docs/source/harmonica*.rst
 docs/source/modules.rst
 .vscode
+*.egg-info

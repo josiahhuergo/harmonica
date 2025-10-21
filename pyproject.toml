@@ -5,7 +5,7 @@ description = "A Python library for the generation, analysis and transformation 
 authors = [
     {name = "Josiah Huergo", email = "josiah@siahbug.com"}
 ]
-license = "MIT"
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -14,14 +14,16 @@ dependencies = [
 ]
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["harmonica", "sandbox"]
 
 [tool.pyright]
 typeCheckingMode = "off"
 
 [tool.mypy]
-# Enable standard mypy checking
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -34,9 +36,7 @@ warn_unused_ignores = true
 warn_no_return = true
 ignore_missing_imports = true
 warn_unreachable = true
-# Exclude tests and docs
 exclude = [
     "./tests/*",
     "./docs/*"
 ]
-
