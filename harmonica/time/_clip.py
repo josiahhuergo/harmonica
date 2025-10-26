@@ -106,7 +106,12 @@ class Clip(Generic[EventType], Event):
 
                 # Note on event
                 track.append(
-                    (onset_ticks, "note_on", note.pitch, int(note.velocity * 127))
+                    (
+                        onset_ticks,
+                        "note_on",
+                        note.pitch,
+                        int(min(max(127, note.velocity * 127), 0)),
+                    )
                 )
                 # Note off event
                 track.append((offset_ticks, "note_off", note.pitch, 0))
