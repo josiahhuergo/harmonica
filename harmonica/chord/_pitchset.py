@@ -5,11 +5,12 @@ from math import ceil
 from typing import TYPE_CHECKING
 
 from harmonica.scale import PitchClassSet
-from harmonica.timeline import Timeline
+from harmonica.time._timeline import Timeline
 from harmonica.utility import diff
 
 if TYPE_CHECKING:
     from harmonica.chord import FindPitchSets, PitchSetShape
+
 
 @dataclass
 class PitchSet:
@@ -22,24 +23,28 @@ class PitchSet:
     ## MAGIC METHODS ##
 
     def __post_init__(self):
-        assert self.pitches == list(sorted(set(self.pitches))), "Pitches in pitch set must be unique."
-        assert self.pitches == list(sorted(self.pitches)), "Pitches in pitch set must be sorted."
+        assert self.pitches == list(
+            sorted(set(self.pitches))
+        ), "Pitches in pitch set must be unique."
+        assert self.pitches == list(
+            sorted(self.pitches)
+        ), "Pitches in pitch set must be sorted."
 
     def __getitem__(self, item: int) -> int:
         return self.pitches[item]
-    
+
     def __iter__(self):
         return iter(self.pitches)
-    
+
     def __add__(self, amount: int) -> PitchSet:
         return self.get_transposed(amount)
-    
+
     def __sub__(self, amount: int) -> PitchSet:
         pset = pset = PitchSet(self.pitches)
         pset.transpose(-amount)
 
         return pset
-    
+
     def __mod__(self, modulus: int) -> PitchClassSet:
         return self.classify(modulus)
 
@@ -53,17 +58,17 @@ class PitchSet:
 
         for i in range(len(self.pitches)):
             self.pitches[i] += amount
-    
+
     def get_transposed(self, amount: int) -> PitchSet:
         """Returns a transposed pitch set."""
-        
+
         return PitchSet([pitch + amount for pitch in self.pitches])
-    
+
     def normalize(self):
         """Transposes the pitch set so the lowest pitch is 0."""
 
         self.transpose(-min(self.pitches))
-    
+
     def get_normalized(self) -> PitchSet:
         """Returns a normalized pitch set."""
 
@@ -73,21 +78,22 @@ class PitchSet:
         """Transposes the pitch set so the pitch at `target_pitch_index` is equal to `target_pitch`."""
 
         self.pitches = [
-            pitch + (target_pitch - self.pitches[target_pitch_index]) for pitch in self.pitches
+            pitch + (target_pitch - self.pitches[target_pitch_index])
+            for pitch in self.pitches
         ]
-    
+
     def get_harmonized(self, target_pitch: int, target_pitch_index: int):
         """Returns transposed pitch set. Immutable variant of `harmonize()`."""
-    
+
     def invert(self, amount: int, modulus: int = 12):
-        """Treats the pitch set as a chord-scale with respect to a given modulus - 12 by default - 
-        and inverts the chord by a certain amount. This has the effect of moving the pitch set 
+        """Treats the pitch set as a chord-scale with respect to a given modulus - 12 by default -
+        and inverts the chord by a certain amount. This has the effect of moving the pitch set
         up or down in register."""
 
         new_mod = modulus * ceil(self.span / modulus)
         pcset = self.classify(new_mod)
         func = pcset.scale_function(min(pcset.pitch_classes))
-        self.pitches = [func(func.index(pitch) + amount) for pitch in self.pitches]      
+        self.pitches = [func(func.index(pitch) + amount) for pitch in self.pitches]
 
     ## GENERATE ##
 
@@ -105,15 +111,15 @@ class PitchSet:
     @staticmethod
     def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
         """Convenience method that allows the syntax `PitchSet.find()`."""
-        
+
         from harmonica.chord import FindPitchSets
-        
+
         return FindPitchSets(min_pitch, max_pitch)
 
     @property
     def shape(self) -> PitchSetShape:
         """The sequence of intervals between adjacent pitches in the set."""
-        
+
         from harmonica.chord import PitchSetShape
 
         return PitchSetShape(diff(self.pitches))
@@ -123,44 +129,32 @@ class PitchSet:
         """The number of pitches in the set."""
 
         return len(self.pitches)
-    
+
     @property
     def span(self) -> int:
         """The difference between the highest and lowest pitches in the set."""
 
         return max(self.pitches) - min(self.pitches)
-    
+
     @property
     def interval_spectrum(self) -> list[list[int]]:
         """Returns a list of lists that describes intervals between notes that
         are one space apart, then two spaces apart, etc.
-        
+
         >>> PitchSet([0,4,7,14]).interval_spectrum
         [[4,3,7], [7,10], [14]]]
-         
+
         This accounts for every interval present in the pitch set."""
-        
+
         if self.cardinality <= 1:
             return []
-        
+
         spectrum: list[list[int]] = []
-        
+
         for jump in range(1, self.cardinality):
             diffs: list[int] = []
             for pos in range(self.cardinality - jump):
                 diffs.append(self.pitches[pos + jump] - self.pitches[pos])
             spectrum.append(diffs)
-            
-        return spectrum
 
-    ## LISTEN ##
-    
-    def play(self, dur: Fraction = Fraction(6)):
-        """Plays the pitch set real time as MIDI."""
-        
-        tl = Timeline()
-        
-        for pitch in self.pitches:
-            tl.add_note(Fraction(), pitch, dur)
-            
-        tl.play_midi()
+        return spectrum

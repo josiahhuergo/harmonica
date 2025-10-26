@@ -2,11 +2,8 @@
 
 from __future__ import annotations
 from dataclasses import dataclass, field
-from fractions import Fraction
 import math
 from typing import Iterable, overload
-
-from harmonica.timeline import Note, Timeline
 from harmonica.utility import cumsum, diff
 
 __all__ = ["PitchSeq", "PitchSeqShape", "PitchFunc", "PCSequence", "Polyphony"]
@@ -56,28 +53,6 @@ class PitchSeq:
         """Returns the sequence of intervals between successive pitches in the sequence."""
 
         return PitchSeqShape(diff(self.pitches))
-
-    ## LISTEN ##
-
-    def play(
-        self, dur: Fraction = Fraction(1), bpm: int = 120, hang: Fraction = Fraction()
-    ):
-        """Plays the pitch sequence real time as MIDI.
-
-        Each note will be `dur` long, which is 1 beat by default.
-
-        There is an optional `hang` argument, which specifies how long the last note rings out.
-        """
-
-        tl = Timeline()
-        tl.tempo = bpm
-
-        for i in range(self.length - 1):
-            tl.add_note(dur * i, self.pitches[i], dur)
-
-        tl.add_note(dur * (self.length - 1), self.pitches[-1], dur + hang)
-
-        tl.play_midi()
 
 
 @dataclass
