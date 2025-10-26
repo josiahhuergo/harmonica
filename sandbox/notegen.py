@@ -1,7 +1,5 @@
 from fractions import Fraction
 from itertools import cycle
-import os
-import subprocess
 from harmonica.chord import PitchSet
 from harmonica.melody import PitchFunc
 from harmonica.timeline import Note, Timeline
@@ -131,7 +129,7 @@ chrds = block_chords(
 # for note in funcmel:
 #     timeline.add_event(note)
 
-for note in chrds:
-    timeline.add_event(note)
+# for note in chrds:
+#     timeline.add_event(note)
 
 timeline.write_and_open_midi()

@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 from fractions import Fraction
 import os
 import subprocess
+from time import sleep
 import mido
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
@@ -46,6 +47,13 @@ class Timeline:
         self.events.append(event)
         self._sort()
 
+    def add_events(self, events: list[Event]):
+        """Adds a list of events to the timeline."""
+
+        for event in events:
+            self.events.append(event)
+            self._sort()
+
     def add_note(self, onset: Fraction, pitch: int, duration: Fraction):
         """Adds a note to the timeline."""
 
@@ -65,6 +73,7 @@ class Timeline:
 
     def write_and_open_midi(self, filename: str = "temp"):
         self.write_midi(filename)
+        sleep(0.5)
         subprocess.run(["taskkill", "/f", "/im", "domino.exe"], capture_output=True)
         os.startfile("C:/Users/Siahbug/Documents/harmonica/" + filename + ".mid")
 
