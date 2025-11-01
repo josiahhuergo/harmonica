@@ -115,26 +115,17 @@ class PitchFunc:
     ## TRANSFORM ##
 
     def transpose(self, amount: int):
-        """Shifts the transposition of the scale function."""
+        """Shifts the transposition of the pitch function."""
 
         self.transposition += amount
-
-    def eval_rot(self, n: int) -> int:
-        """Evaluates the scale function and then rotates to the relative mode
-        that's centered on the evaluated pitch."""
-
-        eval = self.eval(n)
-        self.rotate_mode_relative(n)
-
-        return eval
 
     ## GENERATE ##
 
     def compose(self, other: PitchFunc) -> PitchFunc:
-        """Composes this scale function with another."""
+        """Composes this pitch function with another."""
 
         transposition = self.eval(other.eval(0))
-        size = self.size * other.size // math.gcd(self.size, other.modulus)
+        size = self.period * other.period // math.gcd(self.period, other.modulus)
         pattern = [
             chroma - transposition
             for chroma in self.eval(other.eval(range(1, size + 1)))
@@ -150,17 +141,17 @@ class PitchFunc:
     def eval(self, n: Iterable[int]) -> list[int]: ...
 
     def eval(self, n: int | Iterable[int]) -> int | list[int]:
-        """Evaluates the scale function.
+        """Evaluates the pitch function.
 
         The object itself can be called like a function, yielding this evaluation.
 
-        >>> scale = ScaleFunc([2,3,5,7,9,10,12],2)
-        >>> scale(6)
+        >>> func = PitchFunc([2,3,5,7,9,10,12],2)
+        >>> func(6)
         12
 
         You can also evaluate a list of integers:
 
-        >>> scale([1,3,4,6])
+        >>> func([1,3,4,6])
         [4,7,9,12]
         """
 
@@ -171,20 +162,20 @@ class PitchFunc:
 
     def _eval(self, n: int) -> int:
         r = n % len(self.pattern)
-        q = int((n - r)) / self.size
+        q = int((n - r)) / self.period
 
         # Returns quotient * modulus + remainder + transposition
         return int(q * self.modulus + self._rmap[r]) + self.transposition
 
     @property
     def modulus(self) -> int:
-        """Returns the modulus of the scale function."""
+        """Returns the modulus of the pitch function."""
 
         return self.pattern[-1]
 
     @property
-    def size(self) -> int:
-        """Returns the size of the scaling pattern."""
+    def period(self) -> int:
+        """Returns the size of the pattern."""
 
         return len(self.pattern)
 

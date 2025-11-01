@@ -2,9 +2,10 @@
 
 from dataclasses import dataclass
 
-from harmonica.chord import PitchSet
+from ._pitchset import PitchSet
 
 __all__ = ["PitchSetSeq"]
+
 
 @dataclass
 class PitchSetSeq:
@@ -34,14 +35,14 @@ class PitchSetSeq:
 
         if len(self.pitch_sets) == 0:
             return True
-        
+
         cardinality = self.pitch_sets[0].cardinality
 
         if all([x.cardinality == cardinality for x in self.pitch_sets]):
             return True
         else:
             return False
-    
+
     @property
     def len(self) -> int:
         """Returns the length of the sequence of pitch sets."""

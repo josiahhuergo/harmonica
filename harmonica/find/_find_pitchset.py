@@ -10,9 +10,9 @@ from abc import abstractmethod
 from dataclasses import dataclass, field
 from typing import Generic, Optional, TypeVar
 
-from harmonica.scale import PitchClassSet
+from harmonica.pitch import PitchClassSet
 from harmonica.utility import powerset
-from harmonica.chord import PitchSet, PitchSetShape
+from harmonica.pitch import PitchSet, PitchSetShape
 
 type PitchSets = set[PitchSet]
 
@@ -160,7 +160,7 @@ class FindPitchSets:
 T = TypeVar("T")
 
 
-class Criterion(Generic(T)):
+class Criterion(Generic[T]):
     value: Optional[T] = None
 
     @abstractmethod

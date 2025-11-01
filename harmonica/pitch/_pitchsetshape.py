@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from harmonica.utility import cumsum
 
 if TYPE_CHECKING:
-    from harmonica.chord import PitchSet
+    from harmonica.pitch import PitchSet
 
 
 @dataclass
@@ -32,7 +32,7 @@ class PitchSetShape:
     def stamp(self, lowest_pitch: int) -> "PitchSet":
         """Constructs a pitch set using the shape of intervals."""
 
-        from harmonica.chord import PitchSet
+        from harmonica.pitch import PitchSet
 
         return PitchSet(cumsum(self.intervals, lowest_pitch))
 

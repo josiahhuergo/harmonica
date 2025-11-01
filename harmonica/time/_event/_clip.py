@@ -1,13 +1,14 @@
 from __future__ import annotations
 from fractions import Fraction
 import os
+from pathlib import Path
 import subprocess
-from typing import Generic, Self, TypeVar, Union
+from typing import Generic, Iterable, Self, TypeVar
+
+from ._event import Event, Note
 
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
-from harmonica.scale import PCSetWithRoot, PitchClassSet
-from harmonica.time import Event, Note, ScaleChange
 
 EventType = TypeVar("EventType", bound="Event")
 ClipType = TypeVar("ClipType", bound="Clip")
@@ -17,15 +18,15 @@ ClipContents = EventType | ClipType
 class Clip(Generic[EventType], Event):
     """A clip is an event that contains other events."""
 
-    events: list[ClipContents]
+    events: list[EventType | Clip[EventType]]
 
     def __init__(
-        self, events: list[ClipContents], onset: Fraction = Fraction(0)
+        self, events: list[EventType | Clip[EventType]], onset: Fraction = Fraction(0)
     ) -> None:
         super().__init__(onset)
         self.events = events
 
-    def __iter__(self) -> list[ClipContents]:
+    def __iter__(self) -> Iterable[ClipContents]:
         return iter(self.events)
 
     def __repr__(self):
@@ -38,13 +39,13 @@ class Clip(Generic[EventType], Event):
         events: list[EventType] = []
 
         for event in self.events:
-            if isinstance(event, Event) and type(event) is not Clip:
-                events.append(event)
-            elif type(event) is Clip:
+            if isinstance(event, Clip):
                 flattened_clip_events = event.get_flattened_events()
                 for clip_event in flattened_clip_events:
                     clip_event.onset += event.onset
                 events.extend(flattened_clip_events)
+            else:
+                events.append(event)
 
         return sorted(events, key=lambda event: event.onset)
 
@@ -59,12 +60,13 @@ class Clip(Generic[EventType], Event):
         this creates a file called temp.mid by default."""
 
         mid: MidiFile = self._create_midifile(tempo=tempo)
-        mid.save(filename + ".mid")
+        Path("output").mkdir(exist_ok=True)
+        mid.save(f"output/{filename}.mid")
 
     def write_and_open_midi(self, filename: str = "temp", tempo: int = 120):
         self.write_midi(filename, tempo=tempo)
         subprocess.run(["taskkill", "/f", "/im", "domino.exe"], capture_output=True)
-        os.startfile("C:/Users/Siahbug/Documents/harmonica/" + filename + ".mid")
+        os.startfile(str(Path.cwd()) + "/output/" + filename + ".mid")
 
     def _create_midifile(self, tempo: int = 120) -> MidiFile:
         """Creates a MidiFile object and populates it with messages corresponding to
@@ -110,7 +112,7 @@ class Clip(Generic[EventType], Event):
                         onset_ticks,
                         "note_on",
                         note.pitch,
-                        int(min(max(127, note.velocity * 127), 0)),
+                        int(max(min(127, note.velocity * 127), 0)),
                     )
                 )
                 # Note off event
@@ -142,12 +144,17 @@ class NoteClip(Clip[Note]):
         super().__init__(events, onset)
         self.program = program
 
-    get_notes = Clip[Note].get_flattened_events
+    def get_notes(self) -> list[Note]:
+        return Clip[Note].get_flattened_events(self)
+
+    def set_program(self, program: int) -> Self:
+        self.program = program
+        return self
 
 
-class ScaleChangeClip(Clip[ScaleChange]):
-    def get_scale_at_time(self, t: Fraction) -> PitchClassSet | PCSetWithRoot:
-        pass
+# class ScaleChangeClip(Clip[ScaleChange]):
+#     def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
+#         pass
 
 
 def _frac_to_ticks(frac: Fraction, tpb: int) -> int:

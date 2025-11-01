@@ -1,15 +1,13 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from fractions import Fraction
 from math import ceil
 from typing import TYPE_CHECKING
 
-from harmonica.scale import PitchClassSet
-from harmonica.time._timeline import Timeline
+from harmonica.pitch import PitchClassSet
 from harmonica.utility import diff
 
 if TYPE_CHECKING:
-    from harmonica.chord import FindPitchSets, PitchSetShape
+    from harmonica.pitch import PitchSetShape
 
 
 @dataclass
@@ -108,19 +106,11 @@ class PitchSet:
 
     ## ANALYZE ##
 
-    @staticmethod
-    def find(min_pitch: int, max_pitch: int) -> FindPitchSets:
-        """Convenience method that allows the syntax `PitchSet.find()`."""
-
-        from harmonica.chord import FindPitchSets
-
-        return FindPitchSets(min_pitch, max_pitch)
-
     @property
     def shape(self) -> PitchSetShape:
         """The sequence of intervals between adjacent pitches in the set."""
 
-        from harmonica.chord import PitchSetShape
+        from harmonica.pitch import PitchSetShape
 
         return PitchSetShape(diff(self.pitches))
 

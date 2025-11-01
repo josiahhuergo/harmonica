@@ -1,7 +1,7 @@
 from __future__ import annotations
 from itertools import combinations
-from typing import Iterable, overload
-from dataclasses import dataclass
+from typing import Iterable, Optional, overload
+from dataclasses import dataclass, field
 import math
 
 from harmonica.utility import cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
@@ -18,6 +18,7 @@ class PitchClassSet:
 
     pitch_classes: list[int]
     modulus: int
+    root: Optional[int] = field(default=None)
 
     ## MAGIC METHODS ##
 
@@ -32,6 +33,8 @@ class PitchClassSet:
         assert all(
             [0 <= pitch < self.modulus for pitch in self.pitch_classes]
         ), "Pitch classes must be between 0 and modulus - 1."
+        if self.root:
+            assert self.root in self.pitch_classes, "Root must be in pitch class set."
 
     def __getitem__(self, item: int | slice) -> int | list[int]:
         if isinstance(item, int):
@@ -47,19 +50,53 @@ class PitchClassSet:
 
     ## TRANSFORMATION ##
 
+    def rotate_mode_relative(self, amount: int):
+        """Shifts the root of the pitch class set, accessing a relative mode.
+
+        `{0,2,4,5,7,9,11} mod 12 root 4` rotated this way by 2 would shift the
+        root up to the pitch class 2 spaces clockwise from the current root.
+        This would yield `{0,2,4,5,7,9,11} mod 12 root 7`, because 7 is 2 spaces
+        clockwise from 4 in this pitch class set."""
+
+        if self.root == None:
+            return
+
+        i = (self.pitch_classes.index(self.root) + amount) % self.cardinality
+        self.root = self.pitch_classes[i]
+
+    def rotate_mode_parallel(self, amount: int):
+        """Rotates the structure of the pitch class set around the root.
+
+        `{0,2,4,5,7,9,11} mod 12 root 4` rotated this way by 2 would take the
+        structure, `[1,2,2,2,1,2,2]`, and rotate it by 2 to yield the structure of
+        mixolydian, `[2,2,1,2,2,1,2]`, which stamped onto pitch class 4 yields
+        `{1,3,4,6,8,9,11} mod 12 root 4`."""
+
+        if self.root == None:
+            return
+
+        structure = self.structure
+        structure.rotate(amount)
+        new_pcset = structure.stamp_to_pcset_with_root(self.root)
+        self.pitch_classes = new_pcset.pitch_classes
+
     def transpose(self, amount: int):
         """Transposes the pitch classes in the set using modular arithmetic."""
 
         self.pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         self.pitch_classes.sort()
+        if self.root:
+            self.root = (self.root + amount) % self.modulus
 
     def get_transposed(self, amount: int) -> PitchClassSet:
         """Returns a transposed pitch class set."""
 
         pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         pitch_classes.sort()
+        if self.root:
+            self.root = (self.root + amount) % self.modulus
 
-        return PitchClassSet(pitch_classes, self.modulus)
+        return PitchClassSet(pitch_classes, self.modulus, self.root)
 
     def normalize(self, pitch_class: int):
         """Transposes the pitch classes in the set so 0 is present."""
@@ -158,7 +195,12 @@ class PitchClassSet:
         """Returns the intervallic structure of the pitch class set, by default starting
         from the lowest pitch class in the set."""
 
-        intervals = cycle_diff(self.pitch_classes, self.modulus, 0)
+        index = 0
+
+        if self.root:
+            index = self.pitch_classes.index(self.root)
+
+        intervals = cycle_diff(self.pitch_classes, self.modulus, index)
 
         return ScaleStructure(intervals)
 
@@ -167,82 +209,14 @@ class PitchClassSet:
         """Returns the prime subscale of the pitch class set, which has an aperiodic
         structure."""
 
-        return self.structure.prime.stamp_to_pcset(self.pitch_classes[0])
+        root = self.pitch_classes[0]
 
+        if self.root:
+            root_index = self.pitch_classes.index(self.root)
+            prime_len = self.structure.prime.size
+            root = self.pitch_classes[root_index % prime_len]
 
-@dataclass
-class PCSetWithRoot(PitchClassSet):
-    """A pitch class set with one pitch class specified as the root.
-
-    `{0,2,4,5,7,9,11} mod 12 root 4`, or `RootedPCSet([0,2,4,5,7,9,11], 12, 4)`
-    would represent the same set of pitch classes as C major, D dorian, E phrygian, etc.,
-    but the root specifies that it represents E phrygian in particular."""
-
-    ## DATA ##
-
-    root: int
-
-    ## MAGIC METHODS ##
-
-    def __post_init__(self):
-        super().__post_init__()
-        assert self.root in self.pitch_classes, "Root must be in pitch class set."
-
-    ## TRANSFORM ##
-
-    def rotate_mode_relative(self, amount: int):
-        """Shifts the root of the pitch class set, accessing a relative mode.
-
-        `{0,2,4,5,7,9,11} mod 12 root 4` rotated this way by 2 would shift the
-        root up to the pitch class 2 spaces clockwise from the current root.
-        This would yield `{0,2,4,5,7,9,11} mod 12 root 7`, because 7 is 2 spaces
-        clockwise from 4 in this pitch class set."""
-
-        i = (self.pitch_classes.index(self.root) + amount) % self.cardinality
-        self.root = self.pitch_classes[i]
-
-    def rotate_mode_parallel(self, amount: int):
-        """Rotates the structure of the pitch class set around the root.
-
-        `{0,2,4,5,7,9,11} mod 12 root 4` rotated this way by 2 would take the
-        structure, `[1,2,2,2,1,2,2]`, and rotate it by 2 to yield the structure of
-        mixolydian, `[2,2,1,2,2,1,2]`, which stamped onto pitch class 4 yields
-        `{1,3,4,6,8,9,11} mod 12 root 4`."""
-
-        structure = self.structure
-        structure.rotate(amount)
-        new_pcset = structure.stamp_to_pcset_with_root(self.root)
-        self.pitch_classes = new_pcset.pitch_classes
-
-    def transpose(self, amount: int):
-        """Transposes the pitch class set."""
-
-        self.pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
-        self.pitch_classes.sort()
-        self.root = (self.root + amount) % self.modulus
-
-    ## ANALYZE ##
-
-    @property
-    def structure(self) -> ScaleStructure:
-        """The intervallic structure of the pitch class set, starting from the root."""
-
-        intervals = cycle_diff(
-            self.pitch_classes, self.modulus, self.pitch_classes.index(self.root)
-        )
-
-        return ScaleStructure(intervals)
-
-    @property
-    def prime(self) -> PCSetWithRoot:
-        """Returns the prime subscale of the pitch class set, which has an aperiodic
-        structure."""
-
-        root_index = self.pitch_classes.index(self.root)
-        prime_len = self.structure.prime.size
-        root = self.pitch_classes[root_index % prime_len]
-
-        return self.structure.prime.stamp_to_pcset_with_root(root)
+        return self.structure.prime.stamp_to_pcset(root)
 
 
 @dataclass
@@ -282,11 +256,11 @@ class ScaleStructure:
 
         return PitchClassSet(cycle_cumsum(self.intervals, starting_pitch), self.modulus)
 
-    def stamp_to_pcset_with_root(self, starting_pitch: int) -> PCSetWithRoot:
+    def stamp_to_pcset_with_root(self, starting_pitch: int) -> PitchClassSet:
         """Creates a rooted pitch class set by "stamping" this scale structure onto pitch class
         space at the pitch class `starting_pitch`."""
 
-        return PCSetWithRoot(
+        return PitchClassSet(
             cycle_cumsum(self.intervals, starting_pitch),
             self.modulus,
             starting_pitch % self.modulus,

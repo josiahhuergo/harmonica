@@ -1,7 +1,7 @@
 from fractions import Fraction
 from typing import Self
 
-from harmonica.scale import PCSetWithRoot, PitchClassSet
+from harmonica.pitch import PitchClassSet
 
 
 class Event:
@@ -23,6 +23,10 @@ class Event:
 
     def __repr__(self):
         return f"Event(onset={self.onset})"
+
+    def set_onset(self, onset: Fraction) -> Self:
+        self.onset = onset
+        return self
 
 
 class Note(Event):
@@ -59,8 +63,8 @@ class Note(Event):
 
 
 class ScaleChange(Event):
-    scale: PitchClassSet | PCSetWithRoot
+    scale: PitchClassSet
 
-    def __init__(self, onset: Fraction, scale: PitchClassSet | PCSetWithRoot) -> None:
+    def __init__(self, onset: Fraction, scale: PitchClassSet) -> None:
         super().__init__(onset)
         self.scale = scale

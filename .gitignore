@@ -9,3 +9,4 @@ docs/source/modules.rst
 .vscode
 *.egg-info
 output
+build

@@ -1,11 +1,11 @@
 [project]
 name = "harmonica"
 version = "0.1.0"
-description = "A Python library for the generation, analysis and transformation of music theoretical objects."
+description = "A Python library for the generation, analysis and transformation of musical objects."
 authors = [
     {name = "Josiah Huergo", email = "josiah@siahbug.com"}
 ]
-license = {text = "MIT"}
+license = "MIT"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
@@ -18,10 +18,10 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["harmonica", "sandbox"]
+packages = ["harmonica"]
 
 [tool.pyright]
-typeCheckingMode = "off"
+typeCheckingMode = "basic"
 
 [tool.mypy]
 warn_return_any = true
