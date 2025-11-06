@@ -57,12 +57,11 @@ class TimeFunc:
         return q * self.modulus + self._rmap[r] + self.offset
 
     def in_range(self, lower: Fraction, upper: Fraction) -> list[Fraction]:
-        def get_bounds(f: TimeFunc, start: Fraction, stop: Fraction) -> tuple:
-            """
-            Naive algorithm for retrieving the lower and upper bounds for values x,
-            such that `start <= f(x) <= stop`.
-            """
+        """
+        Returns list of all values f(x) such that lower <= f(x) <= upper.
+        """
 
+        def get_bounds(f: TimeFunc, start: Fraction, stop: Fraction) -> tuple:
             lower_bound = 0
             upper_bound = 0
 

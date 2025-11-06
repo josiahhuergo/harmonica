@@ -13,6 +13,8 @@ __all__ = [
     # note_gen
     "block_chords",
     "mono_line",
+    # scale_gen
+    "scale_changes",
     # timefunc
     "TimeFunc",
 ]

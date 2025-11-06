@@ -3,40 +3,41 @@ from fractions import Fraction
 import os
 from pathlib import Path
 import subprocess
-from typing import Generic, Iterable, Self, TypeVar
+from typing import Generic, Iterable, Self, TypeVar, Union
 
-from ._event import Event, Note
+from ._event import Event, Note, ScaleChange
 
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
 
-EventType = TypeVar("EventType", bound="Event")
-ClipType = TypeVar("ClipType", bound="Clip")
-ClipContents = EventType | ClipType
+E = TypeVar("E", bound="Event")
 
 
-class Clip(Generic[EventType], Event):
+class Clip(Generic[E], Event):
     """A clip is an event that contains other events."""
 
-    events: list[EventType | Clip[EventType]]
+    events: list[E | Clip[E]]
 
     def __init__(
-        self, events: list[EventType | Clip[EventType]], onset: Fraction = Fraction(0)
+        self, events: list[E | Clip[E]], onset: Fraction = Fraction(0)
     ) -> None:
         super().__init__(onset)
         self.events = events
 
-    def __iter__(self) -> Iterable[ClipContents]:
+    def __iter__(self) -> Iterable[E | Clip[E]]:
         return iter(self.events)
+
+    def __next__(self) -> E | Clip[E]:
+        return next(self)
 
     def __repr__(self):
         return f"Clip(onset={self.onset}, events={self.events})"
 
-    def get_flattened_events(self) -> list[EventType]:
+    def get_flattened_events(self) -> list[E]:
         """Returns a flattened list of all events in this clip and any other clips
         it contains."""
 
-        events: list[EventType] = []
+        events: list[E] = []
 
         for event in self.events:
             if isinstance(event, Clip):
@@ -49,10 +50,10 @@ class Clip(Generic[EventType], Event):
 
         return sorted(events, key=lambda event: event.onset)
 
-    def add_event(self, event: EventType):
+    def add_event(self, event: E | Clip[E]):
         self.events.append(event)
 
-    def add_events(self, events: list[EventType]):
+    def add_events(self, events: list[E | Clip[E]]):
         self.events.extend(events)
 
     def write_midi(self, filename: str = "temp", tempo: int = 120):
@@ -139,7 +140,10 @@ class NoteClip(Clip[Note]):
     program: int
 
     def __init__(
-        self, events: list, onset: Fraction = Fraction(0), program: int = 0
+        self,
+        events: list[Note | Clip[Note]],
+        onset: Fraction = Fraction(0),
+        program: int = 0,
     ) -> None:
         super().__init__(events, onset)
         self.program = program
@@ -152,9 +156,16 @@ class NoteClip(Clip[Note]):
         return self
 
 
-# class ScaleChangeClip(Clip[ScaleChange]):
-#     def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
-#         pass
+class ScaleChangeClip(Clip[ScaleChange]):
+    def __init__(
+        self,
+        events: list[ScaleChange | Clip[ScaleChange]],
+        onset: Fraction = Fraction(0),
+    ) -> None:
+        super().__init__(events, onset)
+
+    # def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
+    #     pass
 
 
 def _frac_to_ticks(frac: Fraction, tpb: int) -> int:

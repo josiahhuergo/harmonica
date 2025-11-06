@@ -37,7 +37,7 @@ def block_chords(
     assert all([delta >= 0 for delta in delta_seq]), "Deltas must be positive values."
     assert clip_dur >= 0, "Clip duration must be positive."
 
-    notes: list[Note] = []
+    notes = []
 
     chords = cycle(pset_seq)
     deltas = cycle(delta_seq)

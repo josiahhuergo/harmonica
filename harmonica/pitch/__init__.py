@@ -3,7 +3,7 @@
 from ._scales import PitchClassSet, ScaleStructure, ScaleFunc
 from ._pitchset import PitchSet
 from ._pitchsetshape import PitchSetShape
-from .melody import PitchFunc
+from ._pitchfunc import PitchFunc
 
 __all__ = [
     # _scale
@@ -13,6 +13,6 @@ __all__ = [
     # _chord
     "PitchSet",
     "PitchSetShape",
-    # melody
+    # _pitchfunc
     "PitchFunc",
 ]

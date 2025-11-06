@@ -8,9 +8,11 @@
 from __future__ import annotations
 from abc import abstractmethod
 from dataclasses import dataclass, field
+from itertools import combinations
 from typing import Generic, Optional, TypeVar
 
 from harmonica.pitch import PitchClassSet
+from harmonica.pitch._pitchfunc import PitchFunc
 from harmonica.utility import powerset
 from harmonica.pitch import PitchSet, PitchSetShape
 
@@ -82,9 +84,9 @@ class FindPitchSets:
         """Deploys the best algorithms given the current criteria settings
         and returns a set of pitch sets."""
 
-        if self.criteria.has_shape.value is not None:
+        if self.criteria.has_shape.value:
             return self._transpositions()
-        elif self.criteria.in_pcset.value is not None:
+        elif self.criteria.in_pcset.value:
             return self._pcset_search()
         else:
             return self._brute_force()
@@ -257,3 +259,31 @@ class Criteria:
         return all(
             [criterion.filter(pitch_set) for criterion in self.get(excludes).values()]
         )
+
+
+def find_nearby_psets_in_scale(
+    source_pset: PitchSet,
+    target_scale: PitchFunc,
+    proximity: int,
+    size_bounds: tuple[int, int],
+) -> list[PitchSet]:
+    """
+    Returns a list of pitch sets that are in the proximity of a source pitch set
+    and sit in a target scale.
+    """
+
+    target_pitches = []
+
+    for p in source_pset:
+        for tp in target_scale.in_range(p - proximity, p + proximity):
+            if tp not in target_pitches:
+                target_pitches.append(tp)
+
+    proximal_psets = []
+
+    for k in range(size_bounds[0], size_bounds[1] + 1):
+        proximal_psets.extend(
+            [PitchSet(list(x)) for x in combinations(target_pitches, k)]
+        )
+
+    return proximal_psets

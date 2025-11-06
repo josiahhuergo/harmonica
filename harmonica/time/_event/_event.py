@@ -68,3 +68,6 @@ class ScaleChange(Event):
     def __init__(self, onset: Fraction, scale: PitchClassSet) -> None:
         super().__init__(onset)
         self.scale = scale
+
+    def __repr__(self):
+        return f"ScaleChange(onset={self.onset}, scale={self.scale})"
