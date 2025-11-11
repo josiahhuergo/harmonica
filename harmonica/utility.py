@@ -1,8 +1,8 @@
-"""Miscellanious functions that are helpful throughout the library."""
+"""Miscellaneous functions that are helpful throughout the library."""
 
 import math
 from itertools import chain, combinations
-from typing import Generic, Iterable, TypeVar
+from typing import Iterable
 
 __all__ = [
     "pitch_key",
@@ -172,7 +172,7 @@ def repeating_subseq(seq: list) -> list:
 def flatten_list(lst: list) -> list:
     """Takes a nested list and flattens into a simple 1-dimensional list."""
 
-    if lst == []:
+    if not lst:
         return lst
     if isinstance(lst[0], list):
         return flatten_list(lst[0]) + flatten_list(lst[1:])

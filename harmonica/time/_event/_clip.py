@@ -69,6 +69,11 @@ class Clip(Generic[E], Event):
         subprocess.run(["taskkill", "/f", "/im", "domino.exe"], capture_output=True)
         os.startfile(str(Path.cwd()) + "/output/" + filename + ".mid")
 
+    def preview(self, tempo: int = 120):
+        """Listen back to the contents of the clip."""
+
+        self.write_and_open_midi(tempo=tempo)
+
     def _create_midifile(self, tempo: int = 120) -> MidiFile:
         """Creates a MidiFile object and populates it with messages corresponding to
         the tracks in our Timeline object."""

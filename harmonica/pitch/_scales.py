@@ -36,11 +36,12 @@ class PitchClassSet:
         if self.root:
             assert self.root in self.pitch_classes, "Root must be in pitch class set."
 
-    def __getitem__(self, item: int | slice) -> int | list[int]:
+    def __getitem__(self, item: int | slice) -> None | int | list[int]:
         if isinstance(item, int):
             return self.pitch_classes[item]
         if isinstance(item, slice):
-            return self.pitch_classes[item.start : item.stop : item.step]
+            return self.pitch_classes[item.start: item.stop: item.step]
+        return None
 
     def __add__(self, other: int) -> PitchClassSet:
         return self.get_transposed(other)
@@ -58,7 +59,7 @@ class PitchClassSet:
         This would yield `{0,2,4,5,7,9,11} mod 12 root 7`, because 7 is 2 spaces
         clockwise from 4 in this pitch class set."""
 
-        if self.root == None:
+        if self.root is None:
             return
 
         i = (self.pitch_classes.index(self.root) + amount) % self.cardinality
@@ -72,7 +73,7 @@ class PitchClassSet:
         mixolydian, `[2,2,1,2,2,1,2]`, which stamped onto pitch class 4 yields
         `{1,3,4,6,8,9,11} mod 12 root 4`."""
 
-        if self.root == None:
+        if self.root is None:
             return
 
         structure = self.structure
@@ -235,11 +236,12 @@ class ScaleStructure:
             [0 < interval for interval in self.intervals]
         ), "Intervals in scale structure must be positive."
 
-    def __getitem__(self, item: int | slice) -> int | list[int]:
+    def __getitem__(self, item: int | slice) -> None | int | list[int]:
         if isinstance(item, int):
             return self.intervals[item]
         if isinstance(item, slice):
-            return self.intervals[item.start : item.stop : item.step]
+            return self.intervals[item.start: item.stop: item.step]
+        return None
 
     ## TRANSFORM ##
 
@@ -347,15 +349,15 @@ class ScaleFunc:
         ), "Elements of pattern must be greater than 0."
 
     @overload
-    def __call__(self, n: int) -> int: ...
+    def __call__(self, n: int) -> int:
+        ...
+
     @overload
-    def __call__(self, n: Iterable[int]) -> list[int]: ...
+    def __call__(self, n: Iterable[int]) -> list[int]:
+        ...
 
     def __call__(self, n):
-        if isinstance(n, int):
-            return self.eval(n)
-        if isinstance(n, Iterable):
-            return self.eval(n)
+        return self.eval(n)
 
     def __add__(self, amount: int):
         self.transpose(amount)
@@ -385,10 +387,10 @@ class ScaleFunc:
         """Evaluates the scale function and then rotates to the relative mode
         that's centered on the evaluated pitch."""
 
-        eval = self.eval(n)
+        eval_result = self.eval(n)
         self.rotate_mode_relative(n)
 
-        return eval
+        return eval_result
 
     ## GENERATE ##
 
@@ -397,9 +399,9 @@ class ScaleFunc:
 
         transposition = self.eval(other.eval(0))
         cardinality = (
-            self.cardinality
-            * other.cardinality
-            // math.gcd(self.cardinality, other.modulus)
+                self.cardinality
+                * other.cardinality
+                // math.gcd(self.cardinality, other.modulus)
         )
         pattern = [
             chroma - transposition
@@ -416,11 +418,14 @@ class ScaleFunc:
     ## ANALYZE ##
 
     @overload
-    def eval(self, n: int) -> int: ...
-    @overload
-    def eval(self, n: Iterable[int]) -> list[int]: ...
+    def eval(self, n: int) -> int:
+        ...
 
-    def eval(self, n: int | Iterable[int]) -> int | list[int]:
+    @overload
+    def eval(self, n: Iterable[int]) -> list[int]:
+        ...
+
+    def eval(self, n: int | Iterable[int]) -> None | list[int] | int:
         """Evaluates the scale function.
 
         The object itself can be called like a function, yielding this evaluation.
@@ -439,6 +444,7 @@ class ScaleFunc:
             return self._eval(n)
         if isinstance(n, Iterable):
             return [self._eval(i) for i in n]
+        return None
 
     def _eval(self, n: int) -> int:
         r = n % len(self.pattern)
@@ -465,11 +471,14 @@ class ScaleFunc:
         return True if r in self._rmap else False
 
     @overload
-    def index(self, pitch: int) -> int: ...
-    @overload
-    def index(self, pitch: list[int]) -> list[int]: ...
+    def index(self, pitch: int) -> int:
+        ...
 
-    def index(self, pitch: int | list[int]) -> int | list[int]:
+    @overload
+    def index(self, pitch: list[int]) -> list[int]:
+        ...
+
+    def index(self, pitch: int | list[int]) -> None | list[int] | int:
         """Returns the index that maps to `pitch` in this scale function.
 
         Example, the input that produces the pitch 25 from the scale function
@@ -481,13 +490,14 @@ class ScaleFunc:
             return self._index(pitch)
         if isinstance(pitch, list):
             return [self._index(p) for p in pitch]
+        return None
 
     def _index(self, pitch: int) -> int:
         assert self.maps_to_pitch(pitch), "Scale function must map to pitch."
         r = (pitch - self.transposition) % self.modulus
 
         return self._rmap.index(r) + (
-            ((pitch - self.transposition) // self.modulus) * self.cardinality
+                ((pitch - self.transposition) // self.modulus) * self.cardinality
         )
 
     @property

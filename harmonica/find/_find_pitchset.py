@@ -241,9 +241,11 @@ class Criteria:
     has_subshape: HasSubshape = field(default_factory=HasSubshape)
     in_pcset: InPCSet = field(default_factory=InPCSet)
 
-    def get(self, excludes: list[str] = []) -> dict[str, Criterion]:
+    def get(self, excludes=None) -> dict[str, Criterion]:
         """Returns a dict containing criterion objects which have non-None values and
         aren't the pitch bounds."""
+        if excludes is None:
+            excludes = []
         return {
             name: criterion
             for name, criterion in vars(self).items()

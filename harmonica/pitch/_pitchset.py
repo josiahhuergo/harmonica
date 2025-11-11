@@ -41,7 +41,7 @@ class PitchSet:
         return len(self.pitches)
 
     def __sub__(self, amount: int) -> PitchSet:
-        pset = pset = PitchSet(self.pitches)
+        pset = PitchSet(self.pitches)
         pset.transpose(-amount)
 
         return pset

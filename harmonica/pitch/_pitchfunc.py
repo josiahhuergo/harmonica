@@ -19,11 +19,12 @@ class PitchFunc:
     @overload
     def __call__(self, n: Iterable[int]) -> list[int]: ...
 
-    def __call__(self, n):
+    def __call__(self, n: int | Iterable[int]) -> None | int | list[int]:
         if isinstance(n, int):
             return self.eval(n)
-        if isinstance(n, Iterable):
+        elif isinstance(n, Iterable):
             return self.eval(n)
+        return None
 
     def __add__(self, amount: int):
         self.transpose(amount)
@@ -56,7 +57,7 @@ class PitchFunc:
     @overload
     def eval(self, n: Iterable[int]) -> list[int]: ...
 
-    def eval(self, n: int | Iterable[int]) -> int | list[int]:
+    def eval(self, n: int | Iterable[int]) -> None | list[int] | int:
         """Evaluates the pitch function.
 
         The object itself can be called like a function, yielding this evaluation.
@@ -75,6 +76,7 @@ class PitchFunc:
             return self._eval(n)
         if isinstance(n, Iterable):
             return [self._eval(i) for i in n]
+        return None
 
     def _eval(self, n: int) -> int:
         r = n % len(self.pattern)

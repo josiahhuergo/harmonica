@@ -1,5 +1,4 @@
 from dataclasses import dataclass
-from fractions import Fraction
 from typing import TYPE_CHECKING
 
 from harmonica.utility import cumsum
