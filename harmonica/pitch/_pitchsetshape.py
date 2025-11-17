@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from harmonica.utility import cumsum
 
@@ -42,3 +42,10 @@ class PitchSetShape:
         """How many semitones the shape spans."""
 
         return sum(self.intervals)
+
+    ## PREVIEW ##
+
+    def preview(self, bass: int = 60):
+        """Previews the pitch set shape."""
+
+        self.stamp(bass).preview()

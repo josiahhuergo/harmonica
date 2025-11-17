@@ -1,4 +1,4 @@
-from harmonica.pitch.changes import PitchSetSeq
+from harmonica.pitch._changes import PitchSetSeq
 from harmonica.chord import PitchSet
 
 

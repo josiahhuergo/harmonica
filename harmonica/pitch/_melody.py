@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
+from fractions import Fraction
+from typing import Optional
+
 from harmonica.utility import cumsum, diff
 
-__all__ = ["PitchSeq", "PitchSeqShape", "PCSequence", "Polyphony"]
+__all__ = ["PitchSeq", "PitchSeqShape", "PCSequence", "PitchSeqSet"]
 
 
 @dataclass
@@ -51,6 +54,27 @@ class PitchSeq:
         """Returns the sequence of intervals between successive pitches in the sequence."""
 
         return PitchSeqShape(diff(self.pitches))
+
+    ## PREVIEW ##
+
+    def preview(self, bass: Optional[int] = None, duration: Fraction = Fraction(1)):
+        """Previews the pitch sequence."""
+
+        from harmonica.time import NoteClip, Clip, Note
+        from fractions import Fraction
+
+        onset = Fraction(0)
+        transpose = 0
+        if bass:
+            transpose = bass - self[0]
+
+        note_clip = NoteClip([])
+
+        for pitch in self:
+            note_clip.add_event(Note(pitch=pitch + transpose, duration=duration, onset=onset))
+            onset += duration
+
+        Clip([note_clip]).preview()
 
 
 @dataclass
@@ -118,7 +142,7 @@ class PCSequence:
 
 
 @dataclass
-class Polyphony:
+class PitchSeqSet:
     """A set of pitch sequences, representing a polyphony of voices."""
 
     ## DATA ##

@@ -101,7 +101,7 @@ class Clip(Generic[E], Event):
                     "program_change",
                     program=child.program,
                     channel=i,
-                    time=_frac_to_ticks(Fraction(4), mid.ticks_per_beat),
+                    time=_frac_to_ticks(Fraction(0), mid.ticks_per_beat),
                 )
             )
 

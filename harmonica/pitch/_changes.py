@@ -1,6 +1,8 @@
 """Objects and algorithms pertaining to harmonic changes and progressions."""
 
 from dataclasses import dataclass
+from fractions import Fraction
+from typing import Optional
 
 from ._pitchset import PitchSet
 
@@ -19,6 +21,9 @@ class PitchSetSeq:
 
     def __len__(self) -> int:
         return len(self.pitch_sets)
+
+    def __getitem__(self, item: int) -> PitchSet:
+        return self.pitch_sets[item]
 
     ## TRANSFORM ##
 
@@ -48,3 +53,24 @@ class PitchSetSeq:
         """Returns the length of the sequence of pitch sets."""
 
         return len(self.pitch_sets)
+
+    ## PREVIEW ##
+
+    def preview(self, bass: Optional[int] = None, duration: Fraction = Fraction(2), program: int = 0):
+        """Previews the pitch set sequence."""
+
+        from harmonica.time import NoteClip, Clip, Note
+
+        transpose = 0
+        if bass:
+            transpose = bass - self[0][0]
+
+        note_clip = NoteClip([]).set_program(program)
+        onset = Fraction(0)
+
+        for pitch_set in self:
+            for pitch in pitch_set:
+                note_clip.add_event(Note(pitch=pitch + transpose, onset=onset, duration=duration))
+            onset += duration
+
+        Clip([note_clip]).preview()

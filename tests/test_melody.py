@@ -1,4 +1,4 @@
-from harmonica.pitch.melody import Polyphony, PitchSeqShape, PitchSeq
+from harmonica.pitch._melody import PitchSeqSet, PitchSeqShape, PitchSeq
 
 
 class TestPitchSeq:
@@ -32,14 +32,14 @@ class TestPitchSeq:
 
 class TestPSeqSet:
     def test_all_lengths_equal(self):
-        pseqset_a = Polyphony(
+        pseqset_a = PitchSeqSet(
             [
                 PitchSeq([0, 2, 6, 4, 8]),
                 PitchSeq([1, 6, 0, 4, 7, 3]),
                 PitchSeq([0, -6, -2, 7]),
             ]
         )
-        pseqset_b = Polyphony(
+        pseqset_b = PitchSeqSet(
             [
                 PitchSeq([0, 2, 6, 4, 8]),
                 PitchSeq([1, 6, 0, 4, 7]),
@@ -52,14 +52,14 @@ class TestPSeqSet:
         )
 
     def test_transpose(self):
-        pseqset = Polyphony(
+        pseqset = PitchSeqSet(
             [
                 PitchSeq([0, 2, 6, 4, 8]),
                 PitchSeq([1, 6, 0, 4, 7, 3]),
                 PitchSeq([0, -6, -2, 7]),
             ]
         )
-        transposed = Polyphony(
+        transposed = PitchSeqSet(
             [
                 PitchSeq([1, 3, 7, 5, 9]),
                 PitchSeq([2, 7, 1, 5, 8, 4]),

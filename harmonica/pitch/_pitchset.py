@@ -1,7 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from math import ceil
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Optional
 
 from harmonica.pitch import PitchClassSet
 from harmonica.utility import diff
@@ -151,3 +151,23 @@ class PitchSet:
             spectrum.append(diffs)
 
         return spectrum
+
+    ## PREVIEW ##
+
+    def preview(self, bass: Optional[int] = None):
+        """Previews the pitch set."""
+
+        from harmonica.time import NoteClip, Clip, Note
+        from fractions import Fraction
+
+        duration = Fraction(8)
+        transpose = 0
+        if bass:
+            transpose = bass - self[0]
+
+        note_clip = NoteClip([])
+
+        for pitch in self:
+            note_clip.add_event(Note(pitch=pitch + transpose, duration=duration, onset=Fraction(0)))
+
+        Clip([note_clip]).preview()
