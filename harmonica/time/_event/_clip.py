@@ -3,7 +3,7 @@ from fractions import Fraction
 import os
 from pathlib import Path
 import subprocess
-from typing import Generic, Iterable, Self, TypeVar, Union
+from typing import Generic, Iterable, Self, Sequence, TypeVar, Union
 
 from ._event import Event, Note, ScaleChange
 
@@ -16,18 +16,18 @@ E = TypeVar("E", bound="Event")
 class Clip(Generic[E], Event):
     """A clip is an event that contains other events."""
 
-    events: list[E | Clip[E]]
+    events: list[E | Self]
 
     def __init__(
-        self, events: list[E | Clip[E]], onset: Fraction = Fraction(0)
+        self, events: Sequence[E | Self], onset: Fraction = Fraction(0)
     ) -> None:
         super().__init__(onset)
-        self.events = events
+        self.events = list(events)
 
     def __iter__(self) -> Iterable[E | Clip[E]]:
         return iter(self.events)
 
-    def __next__(self) -> E | Clip[E]:
+    def __next__(self) -> E | Self:
         return next(self)
 
     def __repr__(self):
@@ -50,10 +50,10 @@ class Clip(Generic[E], Event):
 
         return sorted(events, key=lambda event: event.onset)
 
-    def add_event(self, event: E | Clip[E]):
+    def add_event(self, event: E | Self):
         self.events.append(event)
 
-    def add_events(self, events: list[E | Clip[E]]):
+    def add_events(self, events: list[E | Self]):
         self.events.extend(events)
 
     def write_midi(self, filename: str = "temp", tempo: int = 120):
@@ -146,7 +146,7 @@ class NoteClip(Clip[Note]):
 
     def __init__(
         self,
-        events: list[Note | Clip[Note]],
+        events: Sequence[Note | Self],
         onset: Fraction = Fraction(0),
         program: int = 0,
     ) -> None:
@@ -164,7 +164,7 @@ class NoteClip(Clip[Note]):
 class ScaleChangeClip(Clip[ScaleChange]):
     def __init__(
         self,
-        events: list[ScaleChange | Clip[ScaleChange]],
+        events: Sequence[ScaleChange | Self],
         onset: Fraction = Fraction(0),
     ) -> None:
         super().__init__(events, onset)

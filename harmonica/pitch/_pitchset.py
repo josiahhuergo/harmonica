@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from fractions import Fraction
 from math import ceil
 from typing import TYPE_CHECKING, Optional
 
@@ -8,6 +9,7 @@ from harmonica.utility import diff
 
 if TYPE_CHECKING:
     from harmonica.pitch import PitchSetShape
+    from harmonica.time import NoteClip
 
 
 @dataclass
@@ -60,6 +62,8 @@ class PitchSet:
         for i in range(len(self.pitches)):
             self.pitches[i] += amount
 
+        return self
+
     def get_transposed(self, amount: int) -> PitchSet:
         """Returns a transposed pitch set."""
 
@@ -69,6 +73,8 @@ class PitchSet:
         """Transposes the pitch set so the lowest pitch is 0."""
 
         self.transpose(-min(self.pitches))
+
+        return self
 
     def get_normalized(self) -> PitchSet:
         """Returns a normalized pitch set."""
@@ -83,6 +89,8 @@ class PitchSet:
             for pitch in self.pitches
         ]
 
+        return self
+
     def get_harmonized(self, target_pitch: int, target_pitch_index: int):
         """Returns transposed pitch set. Immutable variant of `harmonize()`."""
 
@@ -95,6 +103,8 @@ class PitchSet:
         pcset = self.classify(new_mod)
         func = pcset.scale_function(min(pcset.pitch_classes))
         self.pitches = [func(func.index(pitch) + amount) for pitch in self.pitches]
+
+        return self
 
     ## GENERATE ##
 
@@ -154,11 +164,26 @@ class PitchSet:
 
     ## PREVIEW ##
 
+    def to_clip(
+        self, onset: Fraction = Fraction(0), duration: Fraction = Fraction(8)
+    ) -> NoteClip:
+        """Creates a note clip from the pitch set."""
+
+        from harmonica.time import NoteClip, Note
+
+        note_clip = NoteClip([])
+
+        for pitch in self:
+            note_clip.add_event(Note(pitch=pitch, duration=duration, onset=Fraction(0)))
+
+        note_clip.set_onset(onset)
+
+        return note_clip
+
     def preview(self, bass: Optional[int] = None):
         """Previews the pitch set."""
 
         from harmonica.time import NoteClip, Clip, Note
-        from fractions import Fraction
 
         duration = Fraction(8)
         transpose = 0
@@ -168,6 +193,8 @@ class PitchSet:
         note_clip = NoteClip([])
 
         for pitch in self:
-            note_clip.add_event(Note(pitch=pitch + transpose, duration=duration, onset=Fraction(0)))
+            note_clip.add_event(
+                Note(pitch=pitch + transpose, duration=duration, onset=Fraction(0))
+            )
 
         Clip([note_clip]).preview()
