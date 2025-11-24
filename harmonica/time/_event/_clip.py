@@ -19,7 +19,7 @@ class Clip(Generic[E], Event):
     events: list[E | Self]
 
     def __init__(
-        self, events: Sequence[E | Self], onset: Fraction = Fraction(0)
+        self, events: Sequence[E | Self] = [], onset: Fraction = Fraction(0)
     ) -> None:
         super().__init__(onset)
         self.events = list(events)
@@ -146,7 +146,7 @@ class NoteClip(Clip[Note]):
 
     def __init__(
         self,
-        events: Sequence[Note | Self],
+        events: Sequence[Note | Self] = [],
         onset: Fraction = Fraction(0),
         program: int = 0,
     ) -> None:
