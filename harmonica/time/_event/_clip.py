@@ -106,6 +106,9 @@ class Clip(Generic[E], Event):
             )
 
             for note in child.get_notes():
+                if note.pitch > 127:
+                    continue
+
                 onset_ticks = _frac_to_ticks(
                     note.onset + child.onset, mid.ticks_per_beat
                 )
