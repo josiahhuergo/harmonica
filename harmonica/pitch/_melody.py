@@ -20,7 +20,7 @@ class PitchSeq:
 
     ## MAGIC METHODS ##
 
-    def __getitem__(self, item: int) -> int | list[int]:
+    def __getitem__(self, item: int) -> int:
         return self.pitches[item]
 
     def __len__(self) -> int:
@@ -55,6 +55,15 @@ class PitchSeq:
 
         return PitchSeqShape(diff(self.pitches))
 
+    ## GENERATE ##
+
+    def classify(self, modulus: int) -> PCSequence:
+        """Converts the pitch sequence into a pitch class sequence."""
+
+        assert modulus > 0, "Modulus must be positive."
+
+        return PCSequence([pitch % modulus for pitch in self.pitches], modulus)
+
     ## PREVIEW ##
 
     def preview(self, bass: Optional[int] = None, duration: Fraction = Fraction(1)):
@@ -71,7 +80,9 @@ class PitchSeq:
         note_clip = NoteClip([])
 
         for pitch in self:
-            note_clip.add_event(Note(pitch=pitch + transpose, duration=duration, onset=onset))
+            note_clip.add_event(
+                Note(pitch=pitch + transpose, duration=duration, onset=onset)
+            )
             onset += duration
 
         Clip([note_clip]).preview()
@@ -125,6 +136,8 @@ class PCSequence:
         assert all(
             [0 <= pitch_class < self.modulus for pitch_class in self.pitch_classes]
         ), "Pitch classes must be between 0 and modulus - 1."
+
+        assert self.modulus > 0, "Modulus must be positive."
 
     def __getitem__(self, item: int) -> int:
         return self.pitch_classes[item]
