@@ -87,3 +87,7 @@ The more difficult one is to develop a full GUI application as a sort of all-in-
 I will no doubt make attempts to bring these ideas to life, but I am under no illusion about the difficulty of these goals. Making a programming language is a lot of work. Making a big, complex GUI application is an insane amount of work.
 
 Even if I never bring these more lofty ideas to fruition, I will still labor away happily on the existing shape of the project. It is sufficient.
+
+## The structure of this repository
+
+`harmonica` contains the Python package, where `notebooks` is where a vast majority of the documentation and research can be found. `tests` contains unit tests for the `harmonica` package.
