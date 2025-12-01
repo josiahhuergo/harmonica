@@ -23,6 +23,9 @@ class PitchSeq:
     def __getitem__(self, item: int) -> int:
         return self.pitches[item]
 
+    def __iter__(self):
+        return iter(self.pitches)
+
     def __len__(self) -> int:
         return len(self.pitches)
 

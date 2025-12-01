@@ -37,19 +37,19 @@ class Note(Event):
     def __init__(
         self,
         pitch: int,
-        onset: Fraction | str,
-        duration: Fraction | str,
-        velocity: Fraction | str = "1",
+        onset: Fraction | str | int,
+        duration: Fraction | str | int,
+        velocity: Fraction | str | int = 1,
     ):
         super().__init__(onset)
         self.pitch = pitch
 
-        if isinstance(duration, str):
+        if isinstance(duration, str | int):
             self.duration = Fraction(duration)
         elif isinstance(duration, Fraction):
             self.duration = duration
 
-        if isinstance(velocity, str):
+        if isinstance(velocity, str | int):
             self.velocity = Fraction(velocity)
         elif isinstance(velocity, Fraction):
             self.velocity = velocity
@@ -65,7 +65,7 @@ class Note(Event):
 class ScaleChange(Event):
     scale: PitchClassSet
 
-    def __init__(self, onset: Fraction, scale: PitchClassSet) -> None:
+    def __init__(self, onset: Fraction | int | str, scale: PitchClassSet) -> None:
         super().__init__(onset)
         self.scale = scale
 

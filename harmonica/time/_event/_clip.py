@@ -5,6 +5,8 @@ from pathlib import Path
 import subprocess
 from typing import Generic, Iterable, Self, Sequence, TypeVar, Union
 
+from harmonica.pitch import PitchClassSet
+
 from ._event import Event, Note, ScaleChange
 
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
@@ -50,6 +52,11 @@ class Clip(Generic[E], Event):
 
         return sorted(events, key=lambda event: event.onset)
 
+    def get_onsets(self) -> list[Fraction]:
+        """Returns a list of onset times."""
+
+        return sorted(set([event.onset for event in self.events]))
+
     def add_event(self, event: E | Self):
         self.events.append(event)
 
@@ -71,6 +78,9 @@ class Clip(Generic[E], Event):
 
     def preview(self, tempo: int = 120):
         """Listen back to the contents of the clip."""
+
+        if type(self) is NoteClip:
+            Clip([self]).preview(tempo)
 
         self.write_and_open_midi(tempo=tempo)
 
@@ -167,13 +177,19 @@ class NoteClip(Clip[Note]):
 class ScaleChangeClip(Clip[ScaleChange]):
     def __init__(
         self,
-        events: Sequence[ScaleChange | Self],
+        events: Sequence[ScaleChange | Self] = [],
         onset: Fraction = Fraction(0),
     ) -> None:
         super().__init__(events, onset)
 
-    # def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
-    #     pass
+    def get_scales(self) -> list[ScaleChange]:
+        return Clip[ScaleChange].get_flattened_events(self)
+
+    def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
+        for i, scale_change in enumerate(self.get_scales()):
+            if scale_change.onset > t:
+                return self.get_scales()[i - 1].scale
+        return self.get_scales()[-1].scale
 
 
 def _frac_to_ticks(frac: Fraction, tpb: int) -> int:
