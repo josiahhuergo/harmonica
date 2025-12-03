@@ -109,46 +109,47 @@ class Clip(Generic[E], Event):
 
             DUR = 40  # Give all drum hits a constant gate value
 
-            for i, child in enumerate(self.events):
-                if type(child) is not DrumClip:
+            track = []
+
+            # I need to combine the drum tracks.
+
+            drum_clip = DrumClip()
+
+            for event in self.events:
+                if type(event) is DrumClip:
+                    drum_clip.add_event(event)
+
+            for event in drum_clip.get_drum_events():
+                if event.drum < 0 or event.drum > 127:
+                    # Ignore out of bounds values
                     continue
 
-                track = []
+                onset_ticks = _frac_to_ticks(event.onset, mid.ticks_per_beat)
+                offset_ticks = onset_ticks + DUR
 
-                for event in child.get_drum_events():
-                    if event.drum < 0 or event.drum > 127:
-                        # Ignore out of bounds values
-                        continue
+                # Note on event
+                track.append(
+                    (onset_ticks, "note_on", event.drum, int(event.velocity * 127))
+                )
+                # Note off event
+                track.append((offset_ticks, "note_off", event.drum, 0))
 
-                    onset_ticks = _frac_to_ticks(
-                        event.onset + child.onset, mid.ticks_per_beat
+                track.sort(key=lambda x: (x[0], x[1] == "note_on"))
+
+            # Convert to delta-time messages
+            last_time = 0
+            for abs_time, msg_type, pitch, velocity in track:
+                delta = abs_time - last_time
+                mid.tracks[-1].append(
+                    Message(
+                        msg_type,
+                        channel=9,
+                        note=pitch,
+                        velocity=velocity,
+                        time=delta,
                     )
-                    offset_ticks = onset_ticks + DUR
-
-                    # Note on event
-                    track.append(
-                        (onset_ticks, "note_on", event.drum, int(event.velocity * 127))
-                    )
-                    # Note off event
-                    track.append((offset_ticks, "note_off", event.drum, 0))
-
-                    # Sort by time, with note_off before note_on at same tick
-                    track.sort(key=lambda x: (x[0], x[1] == "note_on"))
-
-                    # Convert to delta-time messages
-                    last_time = 0
-                    for abs_time, msg_type, pitch, velocity in track:
-                        delta = abs_time - last_time
-                        mid.tracks[-1].append(
-                            Message(
-                                msg_type,
-                                channel=9,
-                                note=pitch,
-                                velocity=velocity,
-                                time=delta,
-                            )
-                        )
-                        last_time = abs_time
+                )
+                last_time = abs_time
 
         # Add all note clips
         for i, child in enumerate(self.events):
