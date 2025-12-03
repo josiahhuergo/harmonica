@@ -7,7 +7,7 @@ from typing import Generic, Iterable, Self, Sequence, TypeVar, Union
 
 from harmonica.pitch import PitchClassSet
 
-from ._event import Event, Note, ScaleChange
+from ._event import DrumEvent, Event, Note, ScaleChange
 
 from mido import Message, MetaMessage, MidiFile, MidiTrack, bpm2tempo
 
@@ -52,6 +52,16 @@ class Clip(Generic[E], Event):
 
         return sorted(events, key=lambda event: event.onset)
 
+    def get_note_clips(self) -> list[NoteClip]:
+        """Returns a list of the note clips inside of this clip."""
+        note_clips: list[NoteClip] = []
+
+        for event in self.events:
+            if type(event) is NoteClip:
+                note_clips.append(event)
+
+        return note_clips
+
     def get_onsets(self) -> list[Fraction]:
         """Returns a list of onset times."""
 
@@ -79,9 +89,6 @@ class Clip(Generic[E], Event):
     def preview(self, tempo: int = 120):
         """Listen back to the contents of the clip."""
 
-        if type(self) is NoteClip:
-            Clip([self]).preview(tempo)
-
         self.write_and_open_midi(tempo=tempo)
 
     def _create_midifile(self, tempo: int = 120) -> MidiFile:
@@ -96,11 +103,63 @@ class Clip(Generic[E], Event):
         # Set tempo
         mid.tracks[0].append(MetaMessage("set_tempo", tempo=bpm2tempo(tempo)))
 
+        # If there are any drum clips present, create a drum track at index 1 and combine the clips
+        if any([type(event) is DrumClip for event in self.events]):
+            mid.tracks.append(MidiTrack())
+
+            DUR = 40  # Give all drum hits a constant gate value
+
+            for i, child in enumerate(self.events):
+                if type(child) is not DrumClip:
+                    continue
+
+                track = []
+
+                for event in child.get_drum_events():
+                    if event.drum < 0 or event.drum > 127:
+                        # Ignore out of bounds values
+                        continue
+
+                    onset_ticks = _frac_to_ticks(
+                        event.onset + child.onset, mid.ticks_per_beat
+                    )
+                    offset_ticks = onset_ticks + DUR
+
+                    # Note on event
+                    track.append(
+                        (onset_ticks, "note_on", event.drum, int(event.velocity * 127))
+                    )
+                    # Note off event
+                    track.append((offset_ticks, "note_off", event.drum, 0))
+
+                    # Sort by time, with note_off before note_on at same tick
+                    track.sort(key=lambda x: (x[0], x[1] == "note_on"))
+
+                    # Convert to delta-time messages
+                    last_time = 0
+                    for abs_time, msg_type, pitch, velocity in track:
+                        delta = abs_time - last_time
+                        mid.tracks[-1].append(
+                            Message(
+                                msg_type,
+                                channel=9,
+                                note=pitch,
+                                velocity=velocity,
+                                time=delta,
+                            )
+                        )
+                        last_time = abs_time
+
+        # Add all note clips
         for i, child in enumerate(self.events):
             if type(child) is not NoteClip:
                 continue
 
+            if i >= 9:  # Channel index 9 is reserved for the drum track, so we skip
+                i += 1
+
             if i > 15:
+                # There are only 16 channels, 0 through 15, so we ignore anything higher
                 continue
 
             track = []
@@ -116,7 +175,8 @@ class Clip(Generic[E], Event):
             )
 
             for note in child.get_notes():
-                if note.pitch > 127:
+                if note.pitch < 0 or note.pitch > 127:
+                    # Ignore out of bounds values
                     continue
 
                 onset_ticks = _frac_to_ticks(
@@ -155,6 +215,7 @@ class Clip(Generic[E], Event):
 
 
 class NoteClip(Clip[Note]):
+
     program: int
 
     def __init__(
@@ -172,6 +233,22 @@ class NoteClip(Clip[Note]):
     def set_program(self, program: int) -> Self:
         self.program = program
         return self
+
+    def preview(self, tempo: int = 120):
+        Clip([self]).preview(tempo)
+
+
+class DrumClip(Clip[DrumEvent]):
+    def __init__(
+        self, events: Sequence[DrumEvent | Self] = [], onset: Fraction = Fraction(0)
+    ) -> None:
+        super().__init__(events, onset)
+
+    def get_drum_events(self) -> list[DrumEvent]:
+        return Clip[DrumEvent].get_flattened_events(self)
+
+    def preview(self, tempo: int = 120):
+        Clip([self]).preview(tempo)
 
 
 class ScaleChangeClip(Clip[ScaleChange]):

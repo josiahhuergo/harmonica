@@ -2,6 +2,7 @@ from fractions import Fraction
 from typing import Self
 
 from harmonica.pitch import PitchClassSet
+from harmonica.utility import GMDrum
 
 
 class Event:
@@ -10,10 +11,7 @@ class Event:
     onset: Fraction
 
     def __init__(self, onset: Fraction | int | str) -> None:
-        if isinstance(onset, str | int):
-            self.onset = Fraction(onset)
-        elif isinstance(onset, Fraction):
-            self.onset = onset
+        self.onset = Fraction(onset)
 
     def __eq__(self, other: Self) -> bool:
         if self.onset == other.onset:
@@ -24,8 +22,8 @@ class Event:
     def __repr__(self):
         return f"Event(onset={self.onset})"
 
-    def set_onset(self, onset: Fraction) -> Self:
-        self.onset = onset
+    def set_onset(self, onset: Fraction | int | str) -> Self:
+        self.onset = Fraction(onset)
         return self
 
 
@@ -41,25 +39,35 @@ class Note(Event):
         duration: Fraction | str | int,
         velocity: Fraction | str | int = 1,
     ):
-        super().__init__(onset)
-        self.pitch = pitch
-
-        if isinstance(duration, str | int):
-            self.duration = Fraction(duration)
-        elif isinstance(duration, Fraction):
-            self.duration = duration
-
-        if isinstance(velocity, str | int):
-            self.velocity = Fraction(velocity)
-        elif isinstance(velocity, Fraction):
-            self.velocity = velocity
-
         assert (
             self.velocity >= 0 and self.velocity <= 1
         ), "Velocity must be a number between 0 and 1."
 
+        super().__init__(onset)
+        self.pitch = pitch
+        self.duration = Fraction(duration)
+        self.velocity = Fraction(velocity)
+
     def __repr__(self):
         return f"Note(onset={self.onset}, pitch={self.pitch}, duration={self.duration}, velocity={self.velocity})"
+
+
+class DrumEvent(Event):
+    drum: int
+    velocity: Fraction
+
+    def __init__(
+        self,
+        onset: Fraction | int | str,
+        drum: int = GMDrum.LowWoodBlock,
+        velocity: Fraction | int | str = Fraction(1),
+    ) -> None:
+        super().__init__(onset)
+        self.drum = drum
+        self.velocity = Fraction(velocity)
+
+    def __repr__(self):
+        return f"DrumEvent(onset={self.onset}, drum={GMDrum(self.drum).name}, velocity={self.velocity})"
 
 
 class ScaleChange(Event):
