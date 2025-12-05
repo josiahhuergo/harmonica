@@ -39,10 +39,28 @@ class PitchSeq:
 
         self.pitches = [pitch + amount for pitch in self.pitches]
 
+        return self
+
     def normalize(self):
         """Transposes the pitch sequence so the lowest pitch is 0."""
 
         self.transpose(-min(self.pitches))
+
+        return self
+
+    def repeat(self, amount: int):
+        """Repeats the pitch sequence so it occurrs `amount` times."""
+
+        assert amount > 0, "Repeat amount must be positive."
+
+        new_pitches = []
+
+        for i in range(amount):
+            new_pitches.extend(self.pitches)
+
+        self.pitches = new_pitches
+
+        return self
 
     ## ANALYZE ##
 
