@@ -1,8 +1,9 @@
 """Objects and algorithms pertaining to harmonic changes and progressions."""
 
 from dataclasses import dataclass
-from fractions import Fraction
 from typing import Optional
+
+from harmonica.utility import Mixed, Time
 
 from ._pitchset import PitchSet
 
@@ -56,21 +57,25 @@ class PitchSetSeq:
 
     ## PREVIEW ##
 
-    def preview(self, bass: Optional[int] = None, duration: Fraction = Fraction(2), program: int = 0):
+    def preview(self, bass: Optional[int] = None, duration: Time = 2, program: int = 0):
         """Previews the pitch set sequence."""
 
         from harmonica.time import NoteClip, Clip, Note
+
+        duration = Mixed(duration)
 
         transpose = 0
         if bass:
             transpose = bass - self[0][0]
 
         note_clip = NoteClip([]).set_program(program)
-        onset = Fraction(0)
+        onset = Mixed(0)
 
         for pitch_set in self:
             for pitch in pitch_set:
-                note_clip.add_event(Note(pitch=pitch + transpose, onset=onset, duration=duration))
+                note_clip.add_event(
+                    Note(pitch=pitch + transpose, onset=onset, duration=duration)
+                )
             onset += duration
 
         Clip([note_clip]).preview()

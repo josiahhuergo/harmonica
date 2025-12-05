@@ -1,6 +1,9 @@
 from dataclasses import dataclass
-from fractions import Fraction
 from typing import Iterable, overload
+
+from harmonica.time._event._clip import DrumClip
+from harmonica.time._event._event import DrumEvent
+from harmonica.utility import GMDrum, Mixed, Time
 
 
 @dataclass
@@ -9,8 +12,8 @@ class TimeFunc:
 
     ## DATA ##
 
-    pattern: list[Fraction]
-    offset: Fraction = Fraction(0)
+    pattern: list[Mixed]
+    offset: Mixed = Mixed(0)
 
     ## MAGIC METHODS ##
 
@@ -41,27 +44,30 @@ class TimeFunc:
     ## ANALYZE ##
 
     @overload
-    def eval(self, n: int) -> Fraction: ...
+    def eval(self, n: int) -> Mixed: ...
     @overload
-    def eval(self, n: Iterable[int]) -> list[Fraction]: ...
+    def eval(self, n: Iterable[int]) -> list[Mixed]: ...
 
-    def eval(self, n: int | Iterable[int]) -> Fraction | list[Fraction]:
+    def eval(self, n: int | Iterable[int]) -> Mixed | list[Mixed]:
         if isinstance(n, int):
             return self._eval(n)
         if isinstance(n, Iterable):
             return [self._eval(i) for i in n]
 
-    def _eval(self, n: int) -> Fraction:
+    def _eval(self, n: int) -> Mixed:
         q = n // self.period
         r = n % self.period
         return q * self.modulus + self._rmap[r] + self.offset
 
-    def in_range(self, lower: Fraction, upper: Fraction) -> list[Fraction]:
+    def in_range(self, lower: Time, upper: Time) -> list[Mixed]:
         """
         Returns list of all values f(x) such that lower <= f(x) <= upper.
         """
 
-        def get_bounds(f: TimeFunc, start: Fraction, stop: Fraction) -> tuple:
+        lower = Mixed(lower)
+        upper = Mixed(upper)
+
+        def get_bounds(f: TimeFunc, start: Mixed, stop: Mixed) -> tuple:
             lower_bound = 0
             upper_bound = 0
 
@@ -102,7 +108,7 @@ class TimeFunc:
         return self.eval(range(low, high + 1))
 
     @property
-    def modulus(self) -> Fraction:
+    def modulus(self) -> Mixed:
         """Returns the modulus of the time function."""
 
         return self.pattern[-1]
@@ -114,5 +120,14 @@ class TimeFunc:
         return len(self.pattern)
 
     @property
-    def _rmap(self) -> list[Fraction]:  # residue map
-        return [Fraction(0)] + self.pattern[:-1]
+    def _rmap(self) -> list[Mixed]:  # residue map
+        return [Mixed(0)] + self.pattern[:-1]
+
+    ## PREVIEW ##
+
+    def to_clip(self, length: Time, drum: int = GMDrum.Claves) -> DrumClip:
+        length = Mixed(length)
+
+        return DrumClip(
+            [DrumEvent(onset, drum) for onset in self.in_range(Mixed(0), length)]
+        )

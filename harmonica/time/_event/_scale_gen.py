@@ -1,20 +1,20 @@
-from fractions import Fraction
 from itertools import cycle
 from harmonica.pitch import PitchClassSet
+from harmonica.utility import Mixed
 from ._clip import Clip, ScaleChangeClip
 from ._event import ScaleChange
 
 
 def scale_changes(
     change_seq: list[PitchClassSet],
-    delta_seq: list[Fraction],
-    clip_dur: Fraction,
+    delta_seq: list[Mixed],
+    clip_dur: Mixed,
 ) -> ScaleChangeClip:
-    change_events: list[ScaleChange | Clip[ScaleChange]] = []
+    change_events = []
 
     changes = cycle(change_seq)
     deltas = cycle(delta_seq)
-    onset = Fraction(0)
+    onset = Mixed(0)
 
     while onset < clip_dur:
         scale = next(changes)

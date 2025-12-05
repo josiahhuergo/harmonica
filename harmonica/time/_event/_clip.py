@@ -1,11 +1,11 @@
 from __future__ import annotations
-from fractions import Fraction
 import os
 from pathlib import Path
 import subprocess
 from typing import Generic, Iterable, Self, Sequence, TypeVar, Union
 
 from harmonica.pitch import PitchClassSet
+from harmonica.utility import Mixed, Time
 
 from ._event import DrumEvent, Event, Note, ScaleChange
 
@@ -20,9 +20,7 @@ class Clip(Generic[E], Event):
 
     events: list[E | Self]
 
-    def __init__(
-        self, events: Sequence[E | Self] = [], onset: Fraction = Fraction(0)
-    ) -> None:
+    def __init__(self, events: Sequence[E | Self] = [], onset: Time = Mixed(0)) -> None:
         super().__init__(onset)
         self.events = list(events)
 
@@ -62,7 +60,7 @@ class Clip(Generic[E], Event):
 
         return note_clips
 
-    def get_onsets(self) -> list[Fraction]:
+    def get_onsets(self) -> list[Mixed]:
         """Returns a list of onset times."""
 
         return sorted(set([event.onset for event in self.events]))
@@ -171,7 +169,7 @@ class Clip(Generic[E], Event):
                     "program_change",
                     program=child.program,
                     channel=i,
-                    time=_frac_to_ticks(Fraction(0), mid.ticks_per_beat),
+                    time=_frac_to_ticks(Mixed(0), mid.ticks_per_beat),
                 )
             )
 
@@ -222,7 +220,7 @@ class NoteClip(Clip[Note]):
     def __init__(
         self,
         events: Sequence[Note | Self] = [],
-        onset: Fraction = Fraction(0),
+        onset: Time = Mixed(0),
         program: int = 0,
     ) -> None:
         super().__init__(events, onset)
@@ -241,7 +239,7 @@ class NoteClip(Clip[Note]):
 
 class DrumClip(Clip[DrumEvent]):
     def __init__(
-        self, events: Sequence[DrumEvent | Self] = [], onset: Fraction = Fraction(0)
+        self, events: Sequence[DrumEvent | Self] = [], onset: Time = Mixed(0)
     ) -> None:
         super().__init__(events, onset)
 
@@ -256,19 +254,23 @@ class ScaleChangeClip(Clip[ScaleChange]):
     def __init__(
         self,
         events: Sequence[ScaleChange | Self] = [],
-        onset: Fraction = Fraction(0),
+        onset: Time = Mixed(0),
     ) -> None:
         super().__init__(events, onset)
 
     def get_scales(self) -> list[ScaleChange]:
         return Clip[ScaleChange].get_flattened_events(self)
 
-    def get_scale_at_time(self, t: Fraction) -> PitchClassSet:
+    def get_scale_at_time(self, t: Time) -> PitchClassSet:
+        t = Mixed(t)
+
         for i, scale_change in enumerate(self.get_scales()):
             if scale_change.onset > t:
                 return self.get_scales()[i - 1].scale
+
         return self.get_scales()[-1].scale
 
 
-def _frac_to_ticks(frac: Fraction, tpb: int) -> int:
+def _frac_to_ticks(frac: Time, tpb: int) -> int:
+    frac = Mixed(frac)
     return int(tpb * frac)

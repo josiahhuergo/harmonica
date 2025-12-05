@@ -1,20 +1,20 @@
-from fractions import Fraction
 from itertools import cycle
 from typing import Optional
 
 from harmonica.pitch import PitchSet
+from harmonica.utility import Mixed, Time
 from ._event import Note
 from ._clip import NoteClip
 
 
 def block_chords(
     pset_seq: list[PitchSet],
-    delta_seq: list[Fraction],
-    vel_seq: list[Fraction],
-    clip_dur: Fraction,
-    strum: Fraction = Fraction(0),
+    delta_seq: list[Time],
+    vel_seq: list[Mixed],
+    clip_dur: Mixed,
+    strum: Mixed = Mixed(0),
     trim_end: bool = False,
-    note_len: Optional[Fraction] = None,
+    note_len: Optional[Mixed] = None,
 ) -> NoteClip:
     """
     Generates a stream of block chords as notes.
@@ -34,6 +34,9 @@ def block_chords(
     notes will be sustained until the next chord begins.
     """
 
+    delta_seq = [Mixed(delta) for delta in delta_seq]
+    vel_seq = []
+
     assert all([delta >= 0 for delta in delta_seq]), "Deltas must be positive values."
     assert clip_dur >= 0, "Clip duration must be positive."
 
@@ -43,7 +46,7 @@ def block_chords(
     deltas = cycle(delta_seq)
     vels = cycle(vel_seq)
 
-    onset = Fraction(0)
+    onset = Mixed(0)
 
     if not note_len:
         while True:
@@ -108,11 +111,11 @@ def block_chords(
 
 def mono_line(
     pitch_seq: list[int],
-    delta_seq: list[Fraction],
-    vel_seq: list[Fraction],
-    clip_dur: Fraction,
+    delta_seq: list[Mixed],
+    vel_seq: list[Mixed],
+    clip_dur: Mixed,
     trim_end: bool = False,
-    note_len: Optional[Fraction] = None,
+    note_len: Optional[Mixed] = None,
 ) -> NoteClip:
     """Generates a stream of pitches as notes.
 
@@ -133,7 +136,7 @@ def mono_line(
     pitches = cycle(pitch_seq)
     deltas = cycle(delta_seq)
     vels = cycle(vel_seq)
-    onset = Fraction(0)
+    onset = Mixed(0)
 
     while True:
         if onset >= clip_dur:
