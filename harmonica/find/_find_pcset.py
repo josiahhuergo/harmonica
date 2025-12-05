@@ -1,13 +1,22 @@
-from __future__ import annotations
+from typing import Iterator
 
-from harmonica.pitch import PitchClassSet
+from more_itertools import powerset
+from harmonica.pitch._scales import PitchClassSet
 
 
-class FindPCSets:
-    """Object with a dict of strings which specify what criteria to use
-    when generating a list of pitch class sets.
+__all__ = ["find_pcset_supersets"]
 
-    You tack criteria onto the dict by calling methods like `max_size(4)`.
-    Then you call `collect()` to get the resulting list."""
 
-    criteria: PitchClassSet
+def find_pcset_supersets(pitch_class_set: PitchClassSet) -> Iterator[PitchClassSet]:
+    complement = set(range(pitch_class_set.modulus)) - set(
+        pitch_class_set.pitch_classes
+    )
+    pcset_powerset = powerset(complement)
+
+    for other_pitch_classes in pcset_powerset:
+        yield PitchClassSet(
+            pitch_classes=sorted(
+                pitch_class_set.pitch_classes + list(other_pitch_classes)
+            ),
+            modulus=pitch_class_set.modulus,
+        )
