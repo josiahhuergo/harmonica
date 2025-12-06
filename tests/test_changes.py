@@ -1,5 +1,5 @@
 from harmonica.pitch._changes import PitchSetSeq
-from harmonica.chord import PitchSet
+from harmonica.pitch import PitchSet
 
 
 class TestPitchSetSeq:

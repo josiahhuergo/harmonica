@@ -2,14 +2,14 @@ from itertools import cycle
 from typing import Optional
 
 from harmonica.pitch import PitchSet
-from harmonica.utility import Mixed, Time
+from harmonica.utility import Mixed
 from ._event import Note
 from ._clip import NoteClip
 
 
 def block_chords(
     pset_seq: list[PitchSet],
-    delta_seq: list[Time],
+    delta_seq: list[Mixed],
     vel_seq: list[Mixed],
     clip_dur: Mixed,
     strum: Mixed = Mixed(0),
@@ -33,10 +33,6 @@ def block_chords(
     note_len: A fixed length for each note. If None, then the note lengths are legato - meaning
     notes will be sustained until the next chord begins.
     """
-
-    delta_seq = [Mixed(delta) for delta in delta_seq]
-    vel_seq = []
-
     assert all([delta >= 0 for delta in delta_seq]), "Deltas must be positive values."
     assert clip_dur >= 0, "Clip duration must be positive."
 

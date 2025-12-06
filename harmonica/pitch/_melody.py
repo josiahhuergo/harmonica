@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from harmonica.utility import Mixed, Time
+from harmonica.utility import Mixed
 from typing import Optional
 
 from harmonica.utility import cumsum, diff
@@ -87,12 +87,10 @@ class PitchSeq:
 
     ## PREVIEW ##
 
-    def preview(self, bass: Optional[int] = None, duration: Time = Mixed(1)):
+    def preview(self, bass: Optional[int] = None, duration: Mixed = Mixed(1)):
         """Previews the pitch sequence."""
 
         from harmonica.time import NoteClip, Clip, Note
-
-        duration = Mixed(duration)
 
         onset = Mixed(0)
         transpose = 0

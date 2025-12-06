@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Optional
 
-from harmonica.utility import Mixed, Time
+from harmonica.utility import Mixed
 
 from ._pitchset import PitchSet
 
@@ -57,12 +57,12 @@ class PitchSetSeq:
 
     ## PREVIEW ##
 
-    def preview(self, bass: Optional[int] = None, duration: Time = 2, program: int = 0):
+    def preview(
+        self, bass: Optional[int] = None, duration: Mixed = Mixed(2), program: int = 0
+    ):
         """Previews the pitch set sequence."""
 
         from harmonica.time import NoteClip, Clip, Note
-
-        duration = Mixed(duration)
 
         transpose = 0
         if bass:

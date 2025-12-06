@@ -4,7 +4,7 @@ from math import ceil
 from typing import TYPE_CHECKING, Optional
 
 from harmonica.pitch import PitchClassSet
-from harmonica.utility import Mixed, Time, diff
+from harmonica.utility import Mixed, diff
 
 if TYPE_CHECKING:
     from harmonica.pitch import PitchSetShape
@@ -163,13 +163,10 @@ class PitchSet:
 
     ## PREVIEW ##
 
-    def to_clip(self, onset: Time = Mixed(0), duration: Time = Mixed(8)) -> NoteClip:
+    def to_clip(self, onset: Mixed = Mixed(0), duration: Mixed = Mixed(8)) -> NoteClip:
         """Creates a note clip from the pitch set."""
 
         from harmonica.time import NoteClip, Note
-
-        onset = Mixed(onset)
-        duration = Mixed(duration)
 
         note_clip = NoteClip([])
 

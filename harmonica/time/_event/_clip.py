@@ -2,10 +2,10 @@ from __future__ import annotations
 import os
 from pathlib import Path
 import subprocess
-from typing import Generic, Iterable, Self, Sequence, TypeVar, Union
+from typing import Generic, Iterable, Self, Sequence, TypeVar
 
 from harmonica.pitch import PitchClassSet
-from harmonica.utility import Mixed, Time
+from harmonica.utility import Mixed
 
 from ._event import DrumEvent, Event, Note, ScaleChange
 
@@ -20,7 +20,9 @@ class Clip(Generic[E], Event):
 
     events: list[E | Self]
 
-    def __init__(self, events: Sequence[E | Self] = [], onset: Time = Mixed(0)) -> None:
+    def __init__(
+        self, events: Sequence[E | Self] = [], onset: Mixed = Mixed(0)
+    ) -> None:
         super().__init__(onset)
         self.events = list(events)
 
@@ -220,7 +222,7 @@ class NoteClip(Clip[Note]):
     def __init__(
         self,
         events: Sequence[Note | Self] = [],
-        onset: Time = Mixed(0),
+        onset: Mixed = Mixed(0),
         program: int = 0,
     ) -> None:
         super().__init__(events, onset)
@@ -239,7 +241,7 @@ class NoteClip(Clip[Note]):
 
 class DrumClip(Clip[DrumEvent]):
     def __init__(
-        self, events: Sequence[DrumEvent | Self] = [], onset: Time = Mixed(0)
+        self, events: Sequence[DrumEvent | Self] = [], onset: Mixed = Mixed(0)
     ) -> None:
         super().__init__(events, onset)
 
@@ -254,16 +256,14 @@ class ScaleChangeClip(Clip[ScaleChange]):
     def __init__(
         self,
         events: Sequence[ScaleChange | Self] = [],
-        onset: Time = Mixed(0),
+        onset: Mixed = Mixed(0),
     ) -> None:
         super().__init__(events, onset)
 
     def get_scales(self) -> list[ScaleChange]:
         return Clip[ScaleChange].get_flattened_events(self)
 
-    def get_scale_at_time(self, t: Time) -> PitchClassSet:
-        t = Mixed(t)
-
+    def get_scale_at_time(self, t: Mixed) -> PitchClassSet:
         for i, scale_change in enumerate(self.get_scales()):
             if scale_change.onset > t:
                 return self.get_scales()[i - 1].scale
@@ -271,6 +271,5 @@ class ScaleChangeClip(Clip[ScaleChange]):
         return self.get_scales()[-1].scale
 
 
-def _frac_to_ticks(frac: Time, tpb: int) -> int:
-    frac = Mixed(frac)
+def _frac_to_ticks(frac: Mixed, tpb: int) -> int:
     return int(tpb * frac)

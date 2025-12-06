@@ -1,4 +1,4 @@
-from harmonica.pitch import PitchClassSet, ScaleFunc, ScaleStructure, PCSetWithRoot
+from harmonica.pitch import PitchClassSet, ScaleFunc, ScaleStructure
 
 
 class TestPitchClassSet:
@@ -58,31 +58,31 @@ class TestPitchClassSet:
 
 class TestPCSetWithRoot:
     def test_structure(self):
-        scale = PCSetWithRoot([0, 2, 4, 5, 7, 9, 11], 12, 4)
+        scale = PitchClassSet([0, 2, 4, 5, 7, 9, 11], 12, 4)
         structure = ScaleStructure([1, 2, 2, 2, 1, 2, 2])
         assert scale.structure == structure
 
     def test_transpose(self):
-        scale = PCSetWithRoot([0, 2, 4, 5, 7, 9, 11], 12, 4)
-        scale_tr = PCSetWithRoot([0, 1, 3, 5, 6, 8, 10], 12, 5)
+        scale = PitchClassSet([0, 2, 4, 5, 7, 9, 11], 12, 4)
+        scale_tr = PitchClassSet([0, 1, 3, 5, 6, 8, 10], 12, 5)
         scale.transpose(1)
         assert scale == scale_tr
 
     def test_rotate_mode_relative(self):
-        scale = PCSetWithRoot([0, 2, 4, 5, 7, 9, 11], 12, 4)
-        rot = PCSetWithRoot([0, 2, 4, 5, 7, 9, 11], 12, 9)
+        scale = PitchClassSet([0, 2, 4, 5, 7, 9, 11], 12, 4)
+        rot = PitchClassSet([0, 2, 4, 5, 7, 9, 11], 12, 9)
         scale.rotate_mode_relative(3)
         assert scale == rot
 
     def test_rotate_mode_parallel(self):
-        scale = PCSetWithRoot([0, 2, 4, 5, 7, 9, 11], 12, 4)
-        rot = PCSetWithRoot([1, 2, 4, 6, 8, 9, 11], 12, 4)
+        scale = PitchClassSet([0, 2, 4, 5, 7, 9, 11], 12, 4)
+        rot = PitchClassSet([1, 2, 4, 6, 8, 9, 11], 12, 4)
         scale.rotate_mode_parallel(2)
         assert scale == rot
 
     def test_prime(self):
-        scale = PCSetWithRoot([0, 2, 3, 5, 6, 8, 9, 11], 12, 5)
-        prime = PCSetWithRoot([0, 2], 3, 2)
+        scale = PitchClassSet([0, 2, 3, 5, 6, 8, 9, 11], 12, 5)
+        prime = PitchClassSet([0, 2], 3, 2)
         assert scale.prime == prime
 
 
@@ -90,7 +90,7 @@ class TestScaleStructure:
     def test_stamp_to_rooted_pcset(self):
         structure = ScaleStructure([3, 3, 4, 2])
         root = 4
-        rootpcset = PCSetWithRoot([2, 4, 7, 10], structure.modulus, root)
+        rootpcset = PitchClassSet([2, 4, 7, 10], structure.modulus, root)
         assert structure.stamp_to_pcset_with_root(root) == rootpcset
 
     def test_stamp_to_scale_func(self):

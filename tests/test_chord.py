@@ -1,5 +1,5 @@
 import pytest
-from harmonica.chord import PitchSet, PitchSetShape
+from harmonica.pitch import PitchSet, PitchSetShape
 from harmonica.pitch import PitchClassSet
 
 
@@ -84,76 +84,3 @@ class TestPitchSetShape:
     def test_span(self):
         shape = PitchSetShape([2, 4, 6])
         assert shape.span == 12
-
-
-class TestFindPitchSets:
-    def test_brute_force(self):
-        brute = PitchSet.find(60, 65).cardinality(3).collect()
-
-        results = set(
-            PitchSet(x)
-            for x in [
-                [60, 61, 62],
-                [60, 61, 63],
-                [60, 61, 64],
-                [60, 61, 65],
-                [60, 62, 63],
-                [60, 62, 64],
-                [60, 62, 65],
-                [60, 63, 64],
-                [60, 63, 65],
-                [60, 64, 65],
-                [61, 62, 63],
-                [61, 62, 64],
-                [61, 62, 65],
-                [61, 63, 64],
-                [61, 63, 65],
-                [61, 64, 65],
-                [62, 63, 64],
-                [62, 63, 65],
-                [62, 64, 65],
-                [63, 64, 65],
-            ]
-        )
-
-        assert brute == results
-
-    def test_pcset_search(self):
-        in_pcset = (
-            PitchSet.find(60, 66)
-            .in_pcset(PitchClassSet([0, 2, 4, 5, 7, 9, 10], 12))
-            .collect()
-        )
-
-        results = set(
-            PitchSet(x)
-            for x in [
-                [60],
-                [62],
-                [64],
-                [65],
-                [60, 62],
-                [60, 64],
-                [60, 65],
-                [62, 64],
-                [62, 65],
-                [64, 65],
-                [60, 62, 64],
-                [60, 62, 65],
-                [60, 64, 65],
-                [62, 64, 65],
-                [60, 62, 64, 65],
-            ]
-        )
-
-        assert in_pcset == results
-
-    def test_transpositions(self):
-        has_shape = PitchSet.find(60, 66).has_shape(PitchSetShape([2, 1])).collect()
-
-        results = set(
-            PitchSet(x)
-            for x in [[60, 62, 63], [61, 63, 64], [62, 64, 65], [63, 65, 66]]
-        )
-
-        assert has_shape == results

@@ -3,7 +3,7 @@ from typing import Iterable, overload
 
 from harmonica.time._event._clip import DrumClip
 from harmonica.time._event._event import DrumEvent
-from harmonica.utility import GMDrum, Mixed, Time
+from harmonica.utility import GMDrum, Mixed
 
 
 @dataclass
@@ -29,10 +29,10 @@ class TimeFunc:
         ), "Elements of pattern must be greater than 0."
 
     def __call__(self, n):
-        self.eval(n)
+        return self.eval(n)
 
     def __add__(self, amount: int):
-        self.shift(amount)
+        return self.shift(amount)
 
     ## TRANSFORM ##
 
@@ -59,13 +59,10 @@ class TimeFunc:
         r = n % self.period
         return q * self.modulus + self._rmap[r] + self.offset
 
-    def in_range(self, lower: Time, upper: Time) -> list[Mixed]:
+    def in_range(self, lower: Mixed, upper: Mixed) -> list[Mixed]:
         """
         Returns list of all values f(x) such that lower <= f(x) <= upper.
         """
-
-        lower = Mixed(lower)
-        upper = Mixed(upper)
 
         def get_bounds(f: TimeFunc, start: Mixed, stop: Mixed) -> tuple:
             lower_bound = 0
@@ -125,9 +122,7 @@ class TimeFunc:
 
     ## PREVIEW ##
 
-    def to_clip(self, length: Time, drum: int = GMDrum.Claves) -> DrumClip:
-        length = Mixed(length)
-
+    def to_clip(self, length: Mixed, drum: int = GMDrum.Claves) -> DrumClip:
         return DrumClip(
             [DrumEvent(onset, drum) for onset in self.in_range(Mixed(0), length)]
         )

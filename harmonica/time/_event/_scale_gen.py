@@ -1,7 +1,7 @@
 from itertools import cycle
 from harmonica.pitch import PitchClassSet
 from harmonica.utility import Mixed
-from ._clip import Clip, ScaleChangeClip
+from ._clip import ScaleChangeClip
 from ._event import ScaleChange
 
 

@@ -4,7 +4,13 @@ from typing import Iterable, Optional, overload
 from dataclasses import dataclass, field
 import math
 
-from harmonica.utility import cumsum, cycle_cumsum, cycle_diff, repeating_subseq, rotate
+from harmonica.utility import (
+    cumsum,
+    cycle_cumsum,
+    cycle_diff,
+    repeating_subseq,
+    rotate,
+)
 
 
 @dataclass
@@ -40,7 +46,7 @@ class PitchClassSet:
         if isinstance(item, int):
             return self.pitch_classes[item]
         if isinstance(item, slice):
-            return self.pitch_classes[item.start: item.stop: item.step]
+            return self.pitch_classes[item.start : item.stop : item.step]
         return None
 
     def __add__(self, other: int) -> PitchClassSet:
@@ -240,7 +246,7 @@ class ScaleStructure:
         if isinstance(item, int):
             return self.intervals[item]
         if isinstance(item, slice):
-            return self.intervals[item.start: item.stop: item.step]
+            return self.intervals[item.start : item.stop : item.step]
         return None
 
     ## TRANSFORM ##
@@ -349,12 +355,10 @@ class ScaleFunc:
         ), "Elements of pattern must be greater than 0."
 
     @overload
-    def __call__(self, n: int) -> int:
-        ...
+    def __call__(self, n: int) -> int: ...
 
     @overload
-    def __call__(self, n: Iterable[int]) -> list[int]:
-        ...
+    def __call__(self, n: Iterable[int]) -> list[int]: ...
 
     def __call__(self, n):
         return self.eval(n)
@@ -399,9 +403,9 @@ class ScaleFunc:
 
         transposition = self.eval(other.eval(0))
         cardinality = (
-                self.cardinality
-                * other.cardinality
-                // math.gcd(self.cardinality, other.modulus)
+            self.cardinality
+            * other.cardinality
+            // math.gcd(self.cardinality, other.modulus)
         )
         pattern = [
             chroma - transposition
@@ -418,12 +422,10 @@ class ScaleFunc:
     ## ANALYZE ##
 
     @overload
-    def eval(self, n: int) -> int:
-        ...
+    def eval(self, n: int) -> int: ...
 
     @overload
-    def eval(self, n: Iterable[int]) -> list[int]:
-        ...
+    def eval(self, n: Iterable[int]) -> list[int]: ...
 
     def eval(self, n: int | Iterable[int]) -> None | list[int] | int:
         """Evaluates the scale function.
@@ -471,12 +473,10 @@ class ScaleFunc:
         return True if r in self._rmap else False
 
     @overload
-    def index(self, pitch: int) -> int:
-        ...
+    def index(self, pitch: int) -> int: ...
 
     @overload
-    def index(self, pitch: list[int]) -> list[int]:
-        ...
+    def index(self, pitch: list[int]) -> list[int]: ...
 
     def index(self, pitch: int | list[int]) -> None | list[int] | int:
         """Returns the index that maps to `pitch` in this scale function.
@@ -497,7 +497,7 @@ class ScaleFunc:
         r = (pitch - self.transposition) % self.modulus
 
         return self._rmap.index(r) + (
-                ((pitch - self.transposition) // self.modulus) * self.cardinality
+            ((pitch - self.transposition) // self.modulus) * self.cardinality
         )
 
     @property
