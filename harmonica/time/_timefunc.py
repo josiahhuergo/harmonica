@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Iterable, overload
+from typing import Iterable, Self, overload
 
 from harmonica.time._event._clip import DrumClip
 from harmonica.time._event._event import DrumEvent
@@ -31,15 +33,65 @@ class TimeFunc:
     def __call__(self, n):
         return self.eval(n)
 
-    def __add__(self, amount: int):
+    def __add__(self, amount: Mixed):
         return self.shift(amount)
 
     ## TRANSFORM ##
 
-    def shift(self, amount: int):
+    def shift(self, amount: Mixed) -> TimeFunc:
         """Shifts the offset of the time function."""
 
-        self.offset += amount
+        return TimeFunc(self.pattern, self.offset + amount)
+
+    def stretch(self, factor: Mixed) -> TimeFunc:
+        """Scales the pattern by factor."""
+
+        pattern = [value * factor for value in self.pattern]
+
+        return TimeFunc(pattern, self.offset)
+
+    def trunc(self, duration: Mixed) -> TimeFunc:
+        """Truncates the pattern of the time function."""
+
+        onsets = self.in_range(Mixed(0), Mixed(duration))
+        offset = onsets[0]
+        pattern = [onset - offset for onset in onsets]
+        pattern = pattern[1:] + [duration]
+
+        return TimeFunc(pattern, offset)
+
+    def concat(self, other: TimeFunc) -> TimeFunc:
+        """Concatenates another time function to create a compound pattern."""
+
+        onsets = self.in_range(Mixed(0), Mixed(self.modulus))
+        other_onsets = other.in_range(Mixed(0), Mixed(other.modulus))
+        other_onsets = [onset + self.modulus for onset in other_onsets]
+        onsets.extend(other_onsets)
+
+        offset = onsets[0]
+        pattern = [onset - offset for onset in onsets]
+        pattern = pattern[1:] + [self.modulus + other.modulus]
+
+        return TimeFunc(pattern, offset)
+
+    def pad(self, pad_onset: Mixed, pad_dur: Mixed) -> TimeFunc:
+        """Pads the pattern with silence."""
+
+        onsets = self.in_range(Mixed(0), Mixed(self.modulus))
+        unshifted = [onset for onset in onsets if onset < pad_onset]
+        shifted = [onset + pad_dur for onset in onsets if onset >= pad_onset]
+        new_onsets = unshifted + shifted
+
+        offset = new_onsets[0]
+        pattern = [onset - offset for onset in new_onsets]
+        pattern = pattern[1:] + [self.modulus + pad_dur]
+
+        return TimeFunc(pattern, offset)
+
+    def pad_tail(self, pad_dur: Mixed) -> TimeFunc:
+        """Pads the end of the pattern with silence."""
+
+        return self.pad(self.modulus, pad_dur)
 
     ## ANALYZE ##
 
@@ -61,7 +113,7 @@ class TimeFunc:
 
     def in_range(self, lower: Mixed, upper: Mixed) -> list[Mixed]:
         """
-        Returns list of all values f(x) such that lower <= f(x) <= upper.
+        Returns list of all values f(x) such that lower <= f(x) < upper.
         """
 
         def get_bounds(f: TimeFunc, start: Mixed, stop: Mixed) -> tuple:
@@ -88,13 +140,13 @@ class TimeFunc:
             if f.eval(x) < stop:
                 while True:
                     x += 1
-                    if not f.eval(x) <= stop:
+                    if not f.eval(x) < stop:
                         upper_bound = x - 1
                         break
             else:
                 while True:
                     x += 1
-                    if f.eval(x) <= stop:
+                    if f.eval(x) < stop:
                         upper_bound = x
                         break
 
@@ -106,7 +158,7 @@ class TimeFunc:
 
     @property
     def modulus(self) -> Mixed:
-        """Returns the modulus of the time function."""
+        """Returns the modulus of the time function, representing the duration of the pattern."""
 
         return self.pattern[-1]
 
@@ -122,7 +174,7 @@ class TimeFunc:
 
     ## PREVIEW ##
 
-    def to_clip(self, length: Mixed, drum: int = GMDrum.Claves) -> DrumClip:
+    def to_clip(self, duration: Mixed, drum: int = GMDrum.Claves) -> DrumClip:
         return DrumClip(
-            [DrumEvent(onset, drum) for onset in self.in_range(Mixed(0), length)]
+            [DrumEvent(onset, drum) for onset in self.in_range(Mixed(0), duration)]
         )

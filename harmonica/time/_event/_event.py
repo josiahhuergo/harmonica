@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Self
 
 from harmonica.pitch import PitchClassSet
@@ -24,6 +25,13 @@ class Event:
     def set_onset(self, onset: Mixed) -> Self:
         self.onset = onset
         return self
+
+
+@dataclass
+class Rest:
+    """A rest represents a period of silence."""
+
+    duration: Mixed
 
 
 class Note(Event):
