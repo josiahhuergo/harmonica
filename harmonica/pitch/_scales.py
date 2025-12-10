@@ -39,23 +39,44 @@ class PitchClassSet:
         assert all(
             [0 <= pitch < self.modulus for pitch in self.pitch_classes]
         ), "Pitch classes must be between 0 and modulus - 1."
-        if self.root:
+        if self.root is not None:
             assert self.root in self.pitch_classes, "Root must be in pitch class set."
 
-    def __getitem__(self, item: int | slice) -> None | int | list[int]:
+    def __getitem__(self, item: int | slice) -> int | list[int]:
         if isinstance(item, int):
             return self.pitch_classes[item]
         if isinstance(item, slice):
             return self.pitch_classes[item.start : item.stop : item.step]
-        return None
 
     def __add__(self, other: int) -> PitchClassSet:
-        return self.get_transposed(other)
+        return self.transposed(other)
 
     def __sub__(self, other: int) -> PitchClassSet:
-        return self.get_transposed(-other)
+        return self.transposed(-other)
 
     ## TRANSFORMATION ##
+
+    def select(self, selector: PitchClassSet) -> PitchClassSet:
+        """Uses another pitch class set as a selector to return a subset."""
+
+        assert (
+            selector.modulus == self.cardinality
+        ), "Modulus of selector set must be equal to cardinality of pitch class set it's selecting."
+        assert selector.root is not None, "Selector set must have a root."
+        assert self.root is not None, "Pitch class set must have a root."
+
+        root_index = self.index(self.root)
+
+        pitch_classes = sorted(
+            [
+                self.pitch_classes[(index + root_index) % self.cardinality]
+                for index in selector.pitch_classes
+            ]
+        )
+
+        root = self.pitch_classes[(root_index + selector.root) % self.cardinality]
+
+        return PitchClassSet(pitch_classes, self.modulus, root)
 
     def rotate_mode_relative(self, amount: int):
         """Shifts the root of the pitch class set, accessing a relative mode.
@@ -92,18 +113,18 @@ class PitchClassSet:
 
         self.pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         self.pitch_classes.sort()
-        if self.root:
+        if self.root is not None:
             self.root = (self.root + amount) % self.modulus
 
-    def get_transposed(self, amount: int) -> PitchClassSet:
+    def transposed(self, amount: int) -> PitchClassSet:
         """Returns a transposed pitch class set."""
 
         pitch_classes = [(pc + amount) % self.modulus for pc in self.pitch_classes]
         pitch_classes.sort()
-        if self.root:
-            self.root = (self.root + amount) % self.modulus
+        if self.root is not None:
+            root = (self.root + amount) % self.modulus
 
-        return PitchClassSet(pitch_classes, self.modulus, self.root)
+        return PitchClassSet(pitch_classes, self.modulus, root)
 
     def normalize(self, pitch_class: int):
         """Transposes the pitch classes in the set so 0 is present."""
@@ -112,14 +133,21 @@ class PitchClassSet:
 
         self.transpose(-pitch_class)
 
-    def get_normalized(self, pitch_class: int) -> PitchClassSet:
+    def normalized(self, pitch_class: int) -> PitchClassSet:
         """Returns a normalized pitchset."""
 
         assert pitch_class in self.pitch_classes
 
-        return self.get_transposed(-pitch_class)
+        return self.transposed(-pitch_class)
 
     ## ANALYSIS ##
+
+    def index(self, pitch_class: int) -> int:
+        """Returns the index of a pitch class."""
+
+        assert pitch_class in self.pitch_classes, "Pitch class must be in set."
+
+        return self.pitch_classes.index(pitch_class)
 
     def scale_function(self, root: int) -> ScaleFunc:
         """Returns a scale function that maps to the same pitches as this pitch class set.
@@ -129,7 +157,7 @@ class PitchClassSet:
         `[1,3,5,7,8,10,12] + 6`."""
 
         return ScaleFunc(
-            self.get_normalized(root).pitch_classes[1:] + [self.modulus],
+            self.normalized(root).pitch_classes[1:] + [self.modulus],
             min(self.pitch_classes),
         )
 
@@ -204,7 +232,7 @@ class PitchClassSet:
 
         index = 0
 
-        if self.root:
+        if self.root is not None:
             index = self.pitch_classes.index(self.root)
 
         intervals = cycle_diff(self.pitch_classes, self.modulus, index)
@@ -218,7 +246,7 @@ class PitchClassSet:
 
         root = self.pitch_classes[0]
 
-        if self.root:
+        if self.root is not None:
             root_index = self.pitch_classes.index(self.root)
             prime_len = self.structure.prime.size
             root = self.pitch_classes[root_index % prime_len]
