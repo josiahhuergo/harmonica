@@ -1,11 +1,10 @@
 from __future__ import annotations
 from dataclasses import dataclass
-from fractions import Fraction
 from math import ceil
 from typing import TYPE_CHECKING, Optional
 
 from harmonica.pitch import PitchClassSet
-from harmonica.utility import diff
+from harmonica.utility import Mixed, diff
 
 if TYPE_CHECKING:
     from harmonica.pitch import PitchSetShape
@@ -164,9 +163,7 @@ class PitchSet:
 
     ## PREVIEW ##
 
-    def to_clip(
-        self, onset: Fraction = Fraction(0), duration: Fraction = Fraction(8)
-    ) -> NoteClip:
+    def to_clip(self, onset: Mixed = Mixed(0), duration: Mixed = Mixed(8)) -> NoteClip:
         """Creates a note clip from the pitch set."""
 
         from harmonica.time import NoteClip, Note
@@ -174,7 +171,7 @@ class PitchSet:
         note_clip = NoteClip([])
 
         for pitch in self:
-            note_clip.add_event(Note(pitch=pitch, duration=duration, onset=Fraction(0)))
+            note_clip.add_event(Note(pitch=pitch, duration=duration, onset=Mixed(0)))
 
         note_clip.set_onset(onset)
 
@@ -185,7 +182,7 @@ class PitchSet:
 
         from harmonica.time import NoteClip, Clip, Note
 
-        duration = Fraction(8)
+        duration = Mixed(8)
         transpose = 0
         if bass:
             transpose = bass - self[0]
@@ -194,7 +191,7 @@ class PitchSet:
 
         for pitch in self:
             note_clip.add_event(
-                Note(pitch=pitch + transpose, duration=duration, onset=Fraction(0))
+                Note(pitch=pitch + transpose, duration=duration, onset=Mixed(0))
             )
 
         Clip([note_clip]).preview()

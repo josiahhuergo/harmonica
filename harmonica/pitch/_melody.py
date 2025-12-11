@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 from dataclasses import dataclass
-from fractions import Fraction
+from harmonica.utility import Mixed
 from typing import Optional
 
 from harmonica.utility import cumsum, diff
@@ -87,13 +87,12 @@ class PitchSeq:
 
     ## PREVIEW ##
 
-    def preview(self, bass: Optional[int] = None, duration: Fraction = Fraction(1)):
+    def preview(self, bass: Optional[int] = None, duration: Mixed = Mixed(1)):
         """Previews the pitch sequence."""
 
         from harmonica.time import NoteClip, Clip, Note
-        from fractions import Fraction
 
-        onset = Fraction(0)
+        onset = Mixed(0)
         transpose = 0
         if bass:
             transpose = bass - self[0]
