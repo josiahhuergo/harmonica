@@ -9,8 +9,9 @@ from harmonica.utility import GMDrum, Mixed
 
 
 @dataclass
-class TimeFunc:
-    """Time function!"""
+class OnsetFunc:
+    """A list of onset times along with an offset value
+    which models rhythmic patterns."""
 
     ## DATA ##
 
@@ -38,30 +39,30 @@ class TimeFunc:
 
     ## TRANSFORM ##
 
-    def shift(self, amount: Mixed) -> TimeFunc:
-        """Shifts the offset of the time function."""
+    def shift(self, amount: Mixed) -> OnsetFunc:
+        """Shifts the offset of the onset function."""
 
-        return TimeFunc(self.pattern, self.offset + amount)
+        return OnsetFunc(self.pattern, self.offset + amount)
 
-    def stretch(self, factor: Mixed) -> TimeFunc:
+    def stretch(self, factor: Mixed) -> OnsetFunc:
         """Scales the pattern by factor."""
 
         pattern = [value * factor for value in self.pattern]
 
-        return TimeFunc(pattern, self.offset)
+        return OnsetFunc(pattern, self.offset)
 
-    def trunc(self, duration: Mixed) -> TimeFunc:
-        """Truncates the pattern of the time function."""
+    def trunc(self, duration: Mixed) -> OnsetFunc:
+        """Truncates the pattern of the onset function."""
 
         onsets = self.in_range(Mixed(0), Mixed(duration))
         offset = onsets[0]
         pattern = [onset - offset for onset in onsets]
         pattern = pattern[1:] + [duration]
 
-        return TimeFunc(pattern, offset)
+        return OnsetFunc(pattern, offset)
 
-    def concat(self, other: TimeFunc) -> TimeFunc:
-        """Concatenates another time function to create a compound pattern."""
+    def concat(self, other: OnsetFunc) -> OnsetFunc:
+        """Concatenates another onset function to create a compound pattern."""
 
         onsets = self.in_range(Mixed(0), Mixed(self.modulus))
         other_onsets = other.in_range(Mixed(0), Mixed(other.modulus))
@@ -72,9 +73,9 @@ class TimeFunc:
         pattern = [onset - offset for onset in onsets]
         pattern = pattern[1:] + [self.modulus + other.modulus]
 
-        return TimeFunc(pattern, offset)
+        return OnsetFunc(pattern, offset)
 
-    def pad(self, pad_onset: Mixed, pad_dur: Mixed) -> TimeFunc:
+    def pad(self, pad_onset: Mixed, pad_dur: Mixed) -> OnsetFunc:
         """Pads the pattern with silence."""
 
         onsets = self.in_range(Mixed(0), Mixed(self.modulus))
@@ -86,9 +87,9 @@ class TimeFunc:
         pattern = [onset - offset for onset in new_onsets]
         pattern = pattern[1:] + [self.modulus + pad_dur]
 
-        return TimeFunc(pattern, offset)
+        return OnsetFunc(pattern, offset)
 
-    def pad_tail(self, pad_dur: Mixed) -> TimeFunc:
+    def pad_tail(self, pad_dur: Mixed) -> OnsetFunc:
         """Pads the end of the pattern with silence."""
 
         return self.pad(self.modulus, pad_dur)
@@ -116,7 +117,7 @@ class TimeFunc:
         Returns list of all values f(x) such that lower <= f(x) < upper.
         """
 
-        def get_bounds(f: TimeFunc, start: Mixed, stop: Mixed) -> tuple:
+        def get_bounds(f: OnsetFunc, start: Mixed, stop: Mixed) -> tuple:
             lower_bound = 0
             upper_bound = 0
 
@@ -158,13 +159,13 @@ class TimeFunc:
 
     @property
     def modulus(self) -> Mixed:
-        """Returns the modulus of the time function, representing the duration of the pattern."""
+        """Returns the modulus of the onset function, representing the duration of the pattern."""
 
         return self.pattern[-1]
 
     @property
     def period(self) -> int:
-        """Returns the period of the time function, which is the length of its pattern."""
+        """Returns the period of the onset function, which is the length of its pattern."""
 
         return len(self.pattern)
 

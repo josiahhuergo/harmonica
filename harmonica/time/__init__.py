@@ -1,7 +1,7 @@
 """Objects and algorithms for modelling time."""
 
 from ._event import *
-from ._timefunc import *
+from ._onsetfunc import *
 
 __all__ = [
     # event
@@ -15,6 +15,6 @@ __all__ = [
     "mono_line",
     # scale_gen
     "scale_changes",
-    # timefunc
-    "TimeFunc",
+    # onsetfunc
+    "OnsetFunc",
 ]

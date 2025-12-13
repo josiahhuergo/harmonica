@@ -1,30 +1,69 @@
-from itertools import chain, product, islice
-from more_itertools import powerset
-from typing import Iterator
+from dataclasses import dataclass
+from itertools import accumulate
 
-from harmonica.pitch._pitchset import PitchSet
-from harmonica.pitch._scales import PitchClassSet
+from harmonica.utility._mixed import Mixed
 
 
-def list_voicings_in_range(
-    pcset: PitchClassSet, lower_bound: int, upper_bound: int
-) -> Iterator[PitchSet]:
-    """Yields all pitch sets that can be derived from a pitch class set in a range of pitches,
-    assuming each pitch class appears at least once in each pitch set."""
+@dataclass
+class VelocityFunc:
+    duration: int
+    resolution: Mixed
+    subdivisions: list[list[int]]
+    velocities: list[Mixed]
+    offset: Mixed
 
-    # List out each occurrence of each pitch class within bounds
-    in_bounds_pitches_for_each_pc = (
-        (p for p in range(lower_bound, upper_bound + 1) if p % pcset.modulus == pc)
-        for pc in pcset.pitch_classes
-    )
+    def __post_init__(self):
+        assert (
+            self.duration % self.resolution == 0
+        ), "Duration must be a multiple of resolution."
 
-    for pitches in product(
-        *(
-            islice(powerset(in_bound_pitches), 1, None)
-            for in_bound_pitches in in_bounds_pitches_for_each_pc
-        )
-    ):
-        yield PitchSet(list(chain(*pitches)))
+        assert all(
+            [sum(parts) == self.duration for parts in self.subdivisions]
+        ), "Sum of parts in each subdivision level must be equal to duration."
+
+        assert all(
+            [0 <= velocity <= 1 for velocity in self.velocities]
+        ), "Velocities must be between 0 and 1."
+
+    def evaluate(self, t: Mixed) -> Mixed:
+        """Take an onset time t and return a velocity value.
+        Naive algorithm that assumes t is a multiple of resolution."""
+
+        assert (
+            t % self.resolution == 0
+        ), "Evaluated time t must be a multiple of resolution."
+
+        remainder = t % self.dur_in_beats
+
+        for i, subdivision_level in enumerate(self.subdivisions):
+            for onset_numerator in self._subdiv_onsets():
+                pass
+
+        return Mixed(0)
+
+    def _subdiv_onsets(self) -> list[list[int]]:
+        """Transform partitions into onsets that can be compared against while evaluating."""
+
+        subdivs = [[0] + list(accumulate(subdiv[:-1])) for subdiv in self.subdivisions]
+
+        result = [subdivs[0]]
+
+        for i, subdiv in enumerate(subdivs[1:]):
+            result.append([onset for onset in subdiv if onset not in subdivs[i]])
+
+        return result
+
+    @property
+    def dur_in_beats(self) -> Mixed:
+        return Mixed(self.duration) * self.resolution
 
 
-print(list(list_voicings_in_range(PitchClassSet([0, 4, 7], 12), 21, 108)))
+vfunc = VelocityFunc(
+    duration=10,
+    resolution=Mixed("1/4"),
+    subdivisions=[[6, 4], [3, 3, 2, 2], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
+    velocities=[Mixed(x) for x in [1, "2/3", "1/3"]],
+    offset=Mixed(0),
+)
+
+print(vfunc._subdiv_onsets())

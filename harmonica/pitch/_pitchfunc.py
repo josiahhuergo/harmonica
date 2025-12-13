@@ -6,8 +6,8 @@ from typing import Iterable, overload
 
 @dataclass
 class PitchFunc:
-    """A pitch function is a pattern of pitches along with a transposition
-    which models an infinite sequence of pitches."""
+    """A pattern of pitches along with a transposition value
+    which models things like scales and melodic patterns."""
 
     ## DATA ##
 

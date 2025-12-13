@@ -23,6 +23,7 @@ __all__ = [
     "factors",
     "print_iter",
     "powerset",
+    "int_partitions",
 ]
 
 
@@ -210,3 +211,10 @@ def print_iter(lis: Iterable):
 def powerset(iterable):
     s = list(iterable)
     return chain.from_iterable(combinations(s, r) for r in range(len(s) + 1))
+
+
+def int_partitions(n, I=1):
+    yield (n,)
+    for i in range(I, n // 2 + 1):
+        for p in int_partitions(n - i, i):
+            yield (i,) + p
