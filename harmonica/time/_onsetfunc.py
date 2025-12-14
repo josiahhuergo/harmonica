@@ -37,6 +37,9 @@ class OnsetFunc:
     def __add__(self, amount: Mixed):
         return self.shift(amount)
 
+    def __mul__(self, amount: Mixed):
+        return self.stretch(amount)
+
     ## TRANSFORM ##
 
     def shift(self, amount: Mixed) -> OnsetFunc:
@@ -51,7 +54,12 @@ class OnsetFunc:
 
         return OnsetFunc(pattern, self.offset)
 
-    def trunc(self, duration: Mixed) -> OnsetFunc:
+    def stretch_to_dur(self, new_dur: Mixed) -> OnsetFunc:
+        """Stretches the pattern to a specified duration."""
+
+        return self.stretch(new_dur / self.modulus)
+
+    def truncate(self, duration: Mixed) -> OnsetFunc:
         """Truncates the pattern of the onset function."""
 
         onsets = self.in_range(Mixed(0), Mixed(duration))

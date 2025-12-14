@@ -1,69 +1,34 @@
-from dataclasses import dataclass
-from itertools import accumulate
+from math import floor
 
 from harmonica.utility._mixed import Mixed
 
 
-@dataclass
-class VelocityFunc:
-    duration: int
-    resolution: Mixed
-    subdivisions: list[list[int]]
-    velocities: list[Mixed]
-    offset: Mixed
+def truncate(subdivs, res, new_dur_in_beats: Mixed):
+    """Truncates the subdivision tree to a new duration (in beats)."""
 
-    def __post_init__(self):
-        assert (
-            self.duration % self.resolution == 0
-        ), "Duration must be a multiple of resolution."
+    new_dur_in_beats = floor(new_dur_in_beats / res) * res
 
-        assert all(
-            [sum(parts) == self.duration for parts in self.subdivisions]
-        ), "Sum of parts in each subdivision level must be equal to duration."
+    new_dur_units = int(new_dur_in_beats / res)
 
-        assert all(
-            [0 <= velocity <= 1 for velocity in self.velocities]
-        ), "Velocities must be between 0 and 1."
+    new_subdiv_tree = []
 
-    def evaluate(self, t: Mixed) -> Mixed:
-        """Take an onset time t and return a velocity value.
-        Naive algorithm that assumes t is a multiple of resolution."""
+    for subdiv in subdivs:
+        new_subdiv = []
 
-        assert (
-            t % self.resolution == 0
-        ), "Evaluated time t must be a multiple of resolution."
+        for i in subdiv:
+            new_sum = sum(new_subdiv + [i])
+            if new_sum > new_dur_units:
+                diff = new_sum - new_dur_units
+                if i - diff > 0:
+                    new_subdiv.append(i - diff)
+                break
+            else:
+                new_subdiv.append(i)
 
-        remainder = t % self.dur_in_beats
+        new_subdiv_tree.append(new_subdiv)
 
-        for i, subdivision_level in enumerate(self.subdivisions):
-            for onset_numerator in self._subdiv_onsets():
-                pass
-
-        return Mixed(0)
-
-    def _subdiv_onsets(self) -> list[list[int]]:
-        """Transform partitions into onsets that can be compared against while evaluating."""
-
-        subdivs = [[0] + list(accumulate(subdiv[:-1])) for subdiv in self.subdivisions]
-
-        result = [subdivs[0]]
-
-        for i, subdiv in enumerate(subdivs[1:]):
-            result.append([onset for onset in subdiv if onset not in subdivs[i]])
-
-        return result
-
-    @property
-    def dur_in_beats(self) -> Mixed:
-        return Mixed(self.duration) * self.resolution
+    return new_subdiv_tree
 
 
-vfunc = VelocityFunc(
-    duration=10,
-    resolution=Mixed("1/4"),
-    subdivisions=[[6, 4], [3, 3, 2, 2], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]],
-    velocities=[Mixed(x) for x in [1, "2/3", "1/3"]],
-    offset=Mixed(0),
-)
-
-print(vfunc._subdiv_onsets())
+tree = [[6, 4], [3, 3, 2, 2], [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]]
+print(truncate(tree, Mixed("1/4"), Mixed("7/3")))

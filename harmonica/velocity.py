@@ -1,69 +1,83 @@
-"""Objects and algorithms pertaining to velocity / volume."""
-
+from __future__ import annotations
 from dataclasses import dataclass
-from itertools import accumulate
 from math import floor
 
 from harmonica.utility._mixed import Mixed
+from harmonica.utility._utility import rotate
 
 
 @dataclass
 class VelocityFunc:
-    duration: int
+    """A cyclic pattern of velocities that can be used to impose
+    a rhythmic stress pattern over a clip."""
+
+    pattern: list[int]
     resolution: Mixed
-    subdivisions: list[list[int]]
-    velocities: list[Mixed]
-    offset: Mixed
 
     def __post_init__(self):
-        assert (
-            self.duration % self.resolution == 0
-        ), "Duration must be a multiple of resolution."
-
-        assert (
-            self.offset % self.resolution == 0
-        ), "Offset must be a multiple of resolution."
-
         assert all(
-            [sum(parts) == self.duration for parts in self.subdivisions]
-        ), "Sum of parts in each subdivision level must be equal to duration."
+            [velocity_index >= 0 for velocity_index in self.pattern]
+        ), "Numbers in pattern must be positive."
 
-        assert all(
-            [0 <= velocity <= 1 for velocity in self.velocities]
-        ), "Velocities must be between 0 and 1."
+        assert self.resolution > 0, "Time resolution must be positive."
 
-    def evaluate(self, t: Mixed) -> Mixed:
-        """Take an onset time t and return a velocity value.
-        Naive algorithm that assumes t is a multiple of resolution."""
+    def __call__(self, t: Mixed, velocities: list[Mixed]):
+        self.evaluate(t, velocities)
 
-        # assert (
-        #     t % self.resolution == 0
-        # ), "Evaluated time t must be a multiple of resolution."
+    ## TRANSFORM ##
 
-        # For now, I will just round t down to a multiple of resolution.
-        t = floor(t / self.resolution) * self.resolution
+    def shift(self, amount: int) -> VelocityFunc:
+        """Rotates the pattern of the velocity function."""
 
-        remainder = (t + self.offset) % self.dur_in_beats
+        return VelocityFunc(rotate(self.pattern, amount), self.resolution)
 
-        for i, subdiv_level in enumerate(self._subdiv_onsets()):
-            for onset_numerator in subdiv_level:
-                if (onset_numerator * self.resolution) == remainder:
-                    return self.velocities[i]
+    def stretch(self, factor: Mixed) -> VelocityFunc:
+        """Scales the time resolution."""
 
-        return Mixed()
+        return VelocityFunc(self.pattern, self.resolution * factor)
 
-    def _subdiv_onsets(self) -> list[list[int]]:
-        """Transform partitions into onsets that can be compared against while evaluating."""
+    def stretch_to_res(self, new_res: Mixed) -> VelocityFunc:
+        """Sets a new time resolution."""
 
-        subdivs = [[0] + list(accumulate(subdiv[:-1])) for subdiv in self.subdivisions]
+        return VelocityFunc(self.pattern, new_res)
 
-        result = [subdivs[0]]
+    def stretch_to_dur(self, new_dur_in_beats: Mixed) -> VelocityFunc:
+        """Adjusts the time resolution to fit the pattern to a specific duration (in beats)."""
 
-        for i, subdiv in enumerate(subdivs[1:]):
-            result.append([onset for onset in subdiv if onset not in subdivs[i]])
+        return self.stretch(new_dur_in_beats / self.dur_in_units)
 
-        return result
+    def truncate(self, new_dur_in_beats: Mixed) -> VelocityFunc:
+        """Truncates the velocity pattern to a new duration (in beats)."""
+        pass
+
+    def concat(self, other: VelocityFunc) -> VelocityFunc:
+        """Concatenate this pattern with another."""
+        pass
+
+    ## ANALYZE ##
+
+    def evaluate(self, t: Mixed, velocities: list[Mixed]) -> Mixed:
+        """Returns a velocity value corresponding to an onset time `t`."""
+
+        assert (
+            len(velocities) == max(self.pattern) + 1
+        ), "Velocities list must contain enough values for pattern to map to."
+
+        # Quantize t to time resolution
+        t_units = floor(t / self.resolution)
+
+        index = self.pattern[t_units % self.dur_in_units]
+
+        return velocities[index]
+
+    @property
+    def dur_in_units(self) -> int:
+        return len(self.pattern)
 
     @property
     def dur_in_beats(self) -> Mixed:
-        return Mixed(self.duration) * self.resolution
+        return self.resolution * self.dur_in_units
+
+    @property
+    def subdivision_depth(self) -> int:
+        return max(self.pattern) - min(self.pattern)
