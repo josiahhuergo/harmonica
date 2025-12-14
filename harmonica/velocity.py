@@ -1,5 +1,6 @@
 from __future__ import annotations
 from dataclasses import dataclass
+from itertools import cycle
 from math import floor
 
 from harmonica.utility._mixed import Mixed
@@ -48,11 +49,22 @@ class VelocityFunc:
 
     def truncate(self, new_dur_in_beats: Mixed) -> VelocityFunc:
         """Truncates the velocity pattern to a new duration (in beats)."""
-        pass
+
+        new_dur_units = int(new_dur_in_beats / self.resolution)
+
+        new_pattern = []
+
+        pattern_cycle = cycle(self.pattern)
+
+        for _ in range(new_dur_units):
+            new_pattern.append(next(pattern_cycle))
+
+        return VelocityFunc(new_pattern, self.resolution)
 
     def concat(self, other: VelocityFunc) -> VelocityFunc:
-        """Concatenate this pattern with another."""
-        pass
+        """Concatenate this pattern with another, retaining the current time resolution."""
+
+        return VelocityFunc(self.pattern + other.pattern, self.resolution)
 
     ## ANALYZE ##
 

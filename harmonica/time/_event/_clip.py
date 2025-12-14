@@ -6,6 +6,7 @@ from typing import Generic, Iterable, Self, Sequence, TypeVar
 
 from harmonica.pitch import PitchClassSet
 from harmonica.utility import Mixed
+from harmonica.velocity import VelocityFunc
 
 from ._event import DrumEvent, Event, Note, ScaleChange
 
@@ -244,6 +245,23 @@ class DrumClip(Clip[DrumEvent]):
         self, events: Sequence[DrumEvent | Self] = [], onset: Mixed = Mixed(0)
     ) -> None:
         super().__init__(events, onset)
+
+    def apply_velocity_func(
+        self, vfunc: VelocityFunc, velocities: list[Mixed]
+    ) -> DrumClip:
+
+        new_clip = DrumClip()
+
+        for drum_event in self.get_drum_events():
+            new_clip.add_event(
+                DrumEvent(
+                    drum_event.onset,
+                    drum_event.drum,
+                    vfunc.evaluate(drum_event.onset, velocities),
+                )
+            )
+
+        return new_clip
 
     def get_drum_events(self) -> list[DrumEvent]:
         return Clip[DrumEvent].get_flattened_events(self)
